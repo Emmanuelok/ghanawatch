@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Send, Loader2, Bot, User2 } from "lucide-react";
+import { Send, Loader2, Bot, User2, Sparkles } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -21,48 +21,84 @@ export function Investigator() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [partial, setPartial] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, partial, streaming]);
 
   async function send(textOverride?: string) {
     const text = (textOverride ?? input).trim();
-    if (!text || loading) return;
-    const next = [...messages, { role: "user", content: text } as Msg];
+    if (!text || streaming) return;
+    const next: Msg[] = [...messages, { role: "user", content: text }];
     setMessages(next);
     setInput("");
-    setLoading(true);
+    setStreaming(true);
+    setPartial("");
+
     try {
-      const res = await fetch("/api/investigator", {
+      const res = await fetch("/api/investigator-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: next }),
       });
-      const data = await res.json();
-      setMessages((m) => [...m, { role: "assistant", content: data.reply ?? "(no reply)" }]);
+      if (!res.ok || !res.body) throw new Error("Stream failed");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let acc = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const m = line.match(/^data: (.*)$/);
+          if (!m) continue;
+          try {
+            const payload = JSON.parse(m[1]);
+            if (payload.type === "delta") {
+              acc += payload.text;
+              setPartial(acc);
+            } else if (payload.type === "done") {
+              setMessages((prev) => [...prev, { role: "assistant", content: acc }]);
+              setPartial("");
+              setStreaming(false);
+            }
+          } catch {}
+        }
+      }
     } catch {
       setMessages((m) => [
         ...m,
         { role: "assistant", content: "Sorry — the investigator hit a snag. Try again." },
       ]);
-    } finally {
-      setLoading(false);
+      setStreaming(false);
+      setPartial("");
     }
   }
 
   return (
     <div className="card flex h-[640px] flex-col overflow-hidden">
-      <div
-        ref={scrollRef}
-        className="flex-1 space-y-4 overflow-y-auto scroll-shadow p-5"
-      >
+      <div className="flex items-center gap-2 border-b border-line bg-bg-elev/40 px-5 py-3">
+        <Sparkles className="h-4 w-4 text-accent-gold" />
+        <div className="text-[13px] font-semibold">AI Investigator</div>
+        <span className="ml-auto flex items-center gap-1.5 text-[10px] text-ink-muted">
+          <span className={`grid h-1.5 w-1.5 place-items-center rounded-full ${streaming ? "bg-accent-gold animate-pulse" : "bg-accent-green"}`} />
+          {streaming ? "thinking…" : "ready"}
+        </span>
+      </div>
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto scroll-shadow p-5">
         {messages.map((m, i) => (
           <MsgBubble key={i} msg={m} />
         ))}
-        {loading && (
+        {streaming && partial && (
+          <MsgBubble msg={{ role: "assistant", content: partial }} streaming />
+        )}
+        {streaming && !partial && (
           <div className="flex items-center gap-2 text-[13px] text-ink-dim">
             <Loader2 className="h-4 w-4 animate-spin text-accent-gold" />
             Investigator is reasoning…
@@ -104,7 +140,7 @@ export function Investigator() {
           />
           <button
             onClick={() => send()}
-            disabled={loading || !input.trim()}
+            disabled={streaming || !input.trim()}
             className="btn btn-primary disabled:opacity-50"
           >
             <Send className="h-4 w-4" />
@@ -115,7 +151,7 @@ export function Investigator() {
   );
 }
 
-function MsgBubble({ msg }: { msg: Msg }) {
+function MsgBubble({ msg, streaming }: { msg: Msg; streaming?: boolean }) {
   const isUser = msg.role === "user";
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
@@ -132,12 +168,12 @@ function MsgBubble({ msg }: { msg: Msg }) {
         }`}
       >
         <Markdownish text={msg.content} />
+        {streaming && <span className="ml-0.5 inline-block h-3 w-1 animate-pulse bg-accent-gold align-middle" />}
       </div>
     </div>
   );
 }
 
-// Minimal markdown-ish renderer: headings, bold, lists.
 function Markdownish({ text }: { text: string }) {
   const lines = text.split("\n");
   const out: React.ReactNode[] = [];

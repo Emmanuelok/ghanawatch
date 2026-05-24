@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { CursorPresence } from "@/components/cursor-presence";
 import {
   Mic,
   MicOff,
@@ -48,6 +49,8 @@ export function MediationRoom() {
   }
 
   return (
+    <>
+      <CursorPresence />
     <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
       <div className="space-y-4">
         {/* Video grid */}
@@ -143,6 +146,7 @@ export function MediationRoom() {
         </div>
       </aside>
     </div>
+    </>
   );
 }
 

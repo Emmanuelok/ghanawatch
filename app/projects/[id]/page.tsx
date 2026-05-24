@@ -45,6 +45,7 @@ import { ProjectHealth } from "@/components/project-health";
 import { DroneGallery } from "@/components/drone-gallery";
 import { PresenceIndicator } from "@/components/presence-indicator";
 import { ExpectedProgress } from "@/components/expected-progress";
+import { TimeMachine } from "@/components/time-machine";
 import { PARCELS } from "@/lib/parcels";
 import { SIGNATORIES } from "@/lib/mock-data";
 import { ProjectTabs } from "./tabs";
@@ -170,6 +171,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <ProjectHealth projectId={project.id} />
         <ExpectedProgress project={project} />
+      </div>
+
+      <div className="mt-4">
+        <TimeMachine project={project} events={audit} />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">

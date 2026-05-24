@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Send, Paperclip, MapPin, Shield, ShieldCheck, FileText, Camera } from "lucide-react";
+import { Send, Paperclip, MapPin, Shield, ShieldCheck, FileText, Camera, Mic, Play } from "lucide-react";
 
 type Msg = {
   id: string;
@@ -10,6 +10,7 @@ type Msg = {
   text: string;
   ts: string;
   attach?: { kind: "doc" | "photo" | "location"; label: string };
+  voice?: { durationSec: number; transcript: string; language: string };
 };
 
 const SEED: Msg[] = [
@@ -50,7 +51,28 @@ const SEED: Msg[] = [
     who: "manager",
     name: "Kwame Mensah",
     initials: "KM",
-    text: "I'm at the site now. Sending fresh photo with GPS on.",
+    text: "",
+    ts: minus(2, 1.4),
+    voice: {
+      durationSec: 18,
+      language: "Twi",
+      transcript: "Aane sis. Mewɔ site no so seesei. Mereyɛ mfonin a GPS wɔ so a mɛsoma. Wɔn a wɔde cement no baeɛ no ka kyerɛɛ me sɛ wɔbɛsan aba — mɛsoma fresh receipt no nso bere a wɔde aba.",
+    },
+  },
+  {
+    id: "m-5b",
+    who: "system",
+    name: "GhanaWatch",
+    initials: "",
+    text: "Voice note transcribed (Twi → English): \"Yes sis. I'm at the site now. About to send a photo with GPS on. The cement people told me they'll be back — I'll send a fresh receipt when they arrive.\"",
+    ts: minus(2, 1.39),
+  },
+  {
+    id: "m-5c",
+    who: "manager",
+    name: "Kwame Mensah",
+    initials: "KM",
+    text: "Sending the photo now.",
     ts: minus(2, 1),
   },
   {
@@ -208,7 +230,8 @@ function ChatBubble({ msg }: { msg: Msg }) {
           </span>
           <span className="text-[11px] text-ink-muted">{relTime(msg.ts)}</span>
         </div>
-        <p className="mt-1 text-[13px] leading-relaxed text-ink">{msg.text}</p>
+        {msg.text && !msg.voice && <p className="mt-1 text-[13px] leading-relaxed text-ink">{msg.text}</p>}
+        {msg.voice && <VoiceBubble v={msg.voice} />}
         {msg.attach && (
           <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-line bg-bg-elev/40 px-3 py-2 text-[12px]">
             {msg.attach.kind === "doc" && <FileText className="h-3.5 w-3.5 text-accent-gold" />}
@@ -217,6 +240,33 @@ function ChatBubble({ msg }: { msg: Msg }) {
             <span className="text-ink-dim">{msg.attach.label}</span>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function VoiceBubble({ v }: { v: { durationSec: number; transcript: string; language: string } }) {
+  const bars = 24;
+  return (
+    <div className="mt-2 inline-flex max-w-[420px] flex-col gap-1.5 rounded-md border border-line bg-bg-elev/40 px-3 py-2 text-[12px]">
+      <div className="flex items-center gap-2">
+        <button className="grid h-7 w-7 place-items-center rounded-full bg-accent-gold/15 text-accent-gold hover:bg-accent-gold/25">
+          <Play className="ml-0.5 h-3.5 w-3.5" />
+        </button>
+        <div className="flex flex-1 items-center gap-[2px]">
+          {Array.from({ length: bars }).map((_, i) => (
+            <div
+              key={i}
+              className="w-[2px] rounded-full bg-accent-gold/70"
+              style={{ height: `${6 + Math.abs(Math.sin(i * 0.8)) * 14}px` }}
+            />
+          ))}
+        </div>
+        <span className="font-mono text-[10px] text-ink-muted">0:{String(v.durationSec).padStart(2, "0")}</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-[10px] text-ink-muted">
+        <Mic className="h-3 w-3" />
+        Voice note in {v.language} · auto-transcribed
       </div>
     </div>
   );
