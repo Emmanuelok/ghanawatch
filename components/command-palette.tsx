@@ -17,6 +17,10 @@ import {
   Plus,
   AlertTriangle,
   Banknote,
+  Calculator,
+  TrendingUp,
+  Smartphone,
+  Car,
 } from "lucide-react";
 import { PROJECTS, FORENSIC_CASES } from "@/lib/mock-data";
 
@@ -37,9 +41,14 @@ const NAV: Item[] = [
   { id: "inbox", label: "Inbox / Alerts", icon: Inbox, href: "/inbox", group: "Nav" },
   { id: "map", label: "Map view", icon: MapIcon, href: "/map", group: "Nav" },
   { id: "cases", label: "Forensic cases", icon: AlertTriangle, href: "/cases", group: "Nav" },
+  { id: "ledger", label: "Ledger explorer", icon: ScrollText, href: "/ledger", group: "Nav" },
   { id: "kb", label: "Fraud knowledge base", icon: BookOpen, href: "/knowledge", group: "Nav" },
   { id: "trustees", label: "Trustee network", icon: Users, href: "/network", group: "Nav" },
   { id: "sectors", label: "Sectors", icon: Layers, href: "/sectors", group: "Nav" },
+  { id: "tools", label: "Tools", icon: Calculator, href: "/tools", group: "Nav" },
+  { id: "duty", label: "Vehicle duty calculator", icon: Car, href: "/tools/vehicle-duty", group: "Nav" },
+  { id: "bench", label: "Market benchmarks", icon: TrendingUp, href: "/benchmarks", group: "Nav" },
+  { id: "manager", label: "Manager bot preview", icon: Smartphone, href: "/manager", group: "Nav" },
   { id: "pricing", label: "Pricing", icon: Banknote, href: "/pricing", group: "Nav" },
   { id: "settings", label: "Settings", icon: Settings, href: "/settings", group: "Nav" },
   { id: "research", label: "Research", icon: ScrollText, href: "/research", group: "Nav" },

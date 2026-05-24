@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
-import { FileSearch, Camera, Flag, ScrollText, Users, ShieldAlert } from "lucide-react";
+import { FileSearch, Camera, Flag, ScrollText, Users, ShieldAlert, Map } from "lucide-react";
 
-type Tab = "docs" | "photos" | "milestones" | "ledger" | "cases" | "trustee";
+type Tab = "docs" | "photos" | "map" | "milestones" | "ledger" | "cases" | "trustee";
 
 export function ProjectTabs({
   docsTab,
   photosTab,
+  mapTab,
   milestonesTab,
   ledgerTab,
   casesTab,
@@ -14,6 +15,7 @@ export function ProjectTabs({
 }: {
   docsTab: React.ReactNode;
   photosTab: React.ReactNode;
+  mapTab: React.ReactNode;
   milestonesTab: React.ReactNode;
   ledgerTab: React.ReactNode;
   casesTab: React.ReactNode;
@@ -23,6 +25,7 @@ export function ProjectTabs({
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "docs", label: "Documents (forensics)", icon: FileSearch },
     { id: "photos", label: "Site evidence", icon: Camera },
+    { id: "map", label: "Parcel map", icon: Map },
     { id: "milestones", label: "Milestones / escrow", icon: Flag },
     { id: "ledger", label: "Audit ledger", icon: ScrollText },
     { id: "cases", label: "Forensic cases", icon: ShieldAlert },
@@ -54,6 +57,7 @@ export function ProjectTabs({
       <div className="mt-6 animate-fade-in">
         {tab === "docs" && docsTab}
         {tab === "photos" && photosTab}
+        {tab === "map" && mapTab}
         {tab === "milestones" && milestonesTab}
         {tab === "ledger" && ledgerTab}
         {tab === "cases" && casesTab}

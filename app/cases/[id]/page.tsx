@@ -82,7 +82,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        <CaseActions />
+        <CaseActions caseId={c.id} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">

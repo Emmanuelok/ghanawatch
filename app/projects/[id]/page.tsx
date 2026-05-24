@@ -36,6 +36,9 @@ import { AuditLedger } from "@/components/audit-ledger";
 import { MilestoneList } from "@/components/milestone-list";
 import { TimeSeries } from "@/components/timeseries";
 import { Sparkline } from "@/components/sparkline";
+import { RiskExplainer } from "@/components/risk-explainer";
+import { ParcelMap } from "@/components/parcel-map";
+import { PARCELS } from "@/lib/parcels";
 import { ProjectTabs } from "./tabs";
 import { ProjectActions } from "./project-actions";
 
@@ -152,8 +155,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* TRUST + RISK CHART */}
-      <div className="mt-6 grid gap-4 md:grid-cols-[2fr_1fr]">
+      {/* TRUST + RISK CHART + EXPLAINER */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <div className="card p-5">
           <div className="mb-3 flex items-center justify-between">
             <div>
@@ -172,11 +175,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             ]}
           />
         </div>
-        <div className="card p-5">
+        <RiskExplainer project={project} />
+      </div>
+
+      {benchmarks.length > 0 && (
+        <div className="mt-4 card p-5">
           <div className="text-[14px] font-semibold">Sector benchmarks</div>
-          <div className="text-[11px] text-ink-dim">Median market rates for this project's sector / region</div>
-          <div className="mt-3 space-y-2">
-            {benchmarks.length === 0 && <div className="text-[12px] text-ink-muted">No benchmarks for this sector yet.</div>}
+          <div className="text-[11px] text-ink-dim">Median market rates for this project's sector / region — flag any quote outside the p10/p90 band</div>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
             {benchmarks.map((b) => (
               <div key={b.id} className="rounded-md border border-line bg-bg-elev/40 p-3 text-[12px]">
                 <div className="flex items-center justify-between">
@@ -190,7 +196,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             ))}
           </div>
         </div>
-      </div>
+      )}
 
       <ProjectTabs
         docsTab={
@@ -207,6 +213,37 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               <SitePhotoCard key={p.id} photo={p} />
             ))}
             {photos.length === 0 && <Empty>No site evidence yet — request a photo or dispatch a trustee.</Empty>}
+          </div>
+        }
+        mapTab={
+          <div className="card overflow-hidden p-2">
+            <ParcelMap project={project} />
+            {PARCELS[project.id] && (
+              <div className="border-t border-line p-4 text-[12px]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-ink-muted">Parcel:</span>{" "}
+                    <span className="text-ink">{PARCELS[project.id].meta.name}</span>
+                  </div>
+                  <span
+                    className={`chip ${
+                      PARCELS[project.id].meta.status === "encroachment"
+                        ? "risk-high"
+                        : PARCELS[project.id].meta.status === "disputed"
+                        ? "risk-med"
+                        : "risk-low"
+                    }`}
+                  >
+                    {PARCELS[project.id].meta.status}
+                  </span>
+                </div>
+                {PARCELS[project.id].meta.encroachment && (
+                  <p className="mt-2 text-ink-dim">
+                    {PARCELS[project.id].meta.encroachment!.note} (red overlay)
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         }
         milestonesTab={

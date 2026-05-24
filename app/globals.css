@@ -131,3 +131,34 @@ body {
 
 /* Glow ring */
 .glow-gold { box-shadow: 0 0 0 1px rgba(245,184,0,0.3), 0 0 60px rgba(245,184,0,0.15); }
+
+/* MapLibre dark overrides */
+.maplibregl-ctrl-attrib {
+  background: rgba(15, 17, 23, 0.85) !important;
+  color: #9aa0b0 !important;
+  font-size: 10px !important;
+}
+.maplibregl-ctrl-attrib a { color: #c8cdda !important; }
+.maplibregl-ctrl-group {
+  background: #13151d !important;
+  border: 1px solid #222633 !important;
+}
+.maplibregl-ctrl-group button {
+  background: #13151d !important;
+}
+.maplibregl-ctrl-group button:hover { background: #1a1d27 !important; }
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(0.85);
+}
+.maplibregl-ctrl-scale {
+  background: rgba(15,17,23,0.85) !important;
+  color: #9aa0b0 !important;
+  border: 1px solid #222633 !important;
+  border-top: 0 !important;
+}
+.gw-popup .maplibregl-popup-content {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.gw-popup .maplibregl-popup-tip { display: none !important; }

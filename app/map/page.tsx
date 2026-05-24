@@ -1,6 +1,6 @@
 import { Map as MapIcon } from "lucide-react";
-import { GhanaMap } from "@/components/ghana-map";
 import { PROJECTS, REGION_RISK } from "@/lib/mock-data";
+import { MapTabs } from "./map-tabs";
 
 export const metadata = { title: "Map — GhanaWatch" };
 
@@ -15,50 +15,54 @@ export default function MapPage() {
           </div>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">Where your money lives</h1>
           <p className="mt-1 max-w-2xl text-[14px] text-ink-dim">
-            Every project and every regional risk signal on one map. Hover a pin for project detail;
-            shaded circles show the per-region fraud risk score across the GhanaWatch network.
+            Two views. <strong className="text-ink">Country overview</strong> shades each of Ghana's
+            16 regions by risk score. <strong className="text-ink">Interactive map</strong> drops you
+            into real OpenStreetMap tiles, with project pins, parcel boundaries, and encroachment
+            overlays — pan and zoom into the actual streets.
           </p>
         </div>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="card overflow-hidden p-2">
-          <GhanaMap projects={PROJECTS} height={620} />
+        <div className="card overflow-hidden">
+          <MapTabs projects={PROJECTS} />
         </div>
 
         <div className="space-y-4">
           <div className="card p-5">
             <div className="text-[14px] font-semibold">Regional risk index</div>
-            <div className="mt-3 space-y-2">
-              {regions.map(([name, r]) => (
-                <div key={name}>
-                  <div className="flex items-baseline justify-between text-[12px]">
-                    <span className="text-ink">{name}</span>
-                    <span
-                      className="font-semibold"
-                      style={{
-                        color:
-                          r.riskScore >= 60 ? "#ef4444" : r.riskScore >= 40 ? "#f59e0b" : "#10b981",
-                      }}
-                    >
-                      {r.riskScore}
-                    </span>
+            <div className="mt-3 max-h-[520px] overflow-y-auto pr-1 scroll-shadow">
+              <div className="space-y-2">
+                {regions.map(([name, r]) => (
+                  <div key={name}>
+                    <div className="flex items-baseline justify-between text-[12px]">
+                      <span className="text-ink">{name}</span>
+                      <span
+                        className="font-semibold"
+                        style={{
+                          color:
+                            r.riskScore >= 60 ? "#ef4444" : r.riskScore >= 40 ? "#f59e0b" : "#10b981",
+                        }}
+                      >
+                        {r.riskScore}
+                      </span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-bg-subtle">
+                      <div
+                        className="h-full"
+                        style={{
+                          width: `${r.riskScore}%`,
+                          background:
+                            r.riskScore >= 60 ? "#ef4444" : r.riskScore >= 40 ? "#f59e0b" : "#10b981",
+                        }}
+                      />
+                    </div>
+                    <div className="mt-1 text-[10px] text-ink-muted">
+                      {r.activeProjects} projects · {r.openCases} open cases
+                    </div>
                   </div>
-                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-bg-subtle">
-                    <div
-                      className="h-full"
-                      style={{
-                        width: `${r.riskScore}%`,
-                        background:
-                          r.riskScore >= 60 ? "#ef4444" : r.riskScore >= 40 ? "#f59e0b" : "#10b981",
-                      }}
-                    />
-                  </div>
-                  <div className="mt-1 text-[10px] text-ink-muted">
-                    {r.activeProjects} projects · {r.openCases} open cases
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 

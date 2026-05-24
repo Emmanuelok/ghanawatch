@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Shield, Activity, Menu, X, Search, Command } from "lucide-react";
+import { Shield, Menu, X, Search, Command } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
+import { CurrencySelector } from "./currency-context";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -11,10 +12,10 @@ const links = [
   { href: "/map", label: "Map" },
   { href: "/cases", label: "Cases" },
   { href: "/verify", label: "Verify" },
-  { href: "/investigator", label: "Investigator" },
+  { href: "/investigator", label: "AI" },
+  { href: "/tools", label: "Tools" },
   { href: "/knowledge", label: "Knowledge" },
   { href: "/network", label: "Trustees" },
-  { href: "/sectors", label: "Sectors" },
 ];
 
 export function Nav() {
@@ -68,6 +69,7 @@ export function Nav() {
               <Command className="h-2.5 w-2.5" /> K
             </span>
           </button>
+          <div className="hidden md:block"><CurrencySelector /></div>
           <NotificationBell />
           <Link href="/dashboard" className="btn btn-primary hidden py-1.5 text-[13px] md:inline-flex">
             Open app
@@ -99,15 +101,14 @@ export function Nav() {
                 </Link>
               );
             })}
-            <Link href="/inbox" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">
-              Inbox
-            </Link>
-            <Link href="/settings" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">
-              Settings
-            </Link>
-            <Link href="/pricing" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">
-              Pricing
-            </Link>
+            <Link href="/ledger" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Ledger</Link>
+            <Link href="/benchmarks" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Benchmarks</Link>
+            <Link href="/manager" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Manager bot</Link>
+            <Link href="/sectors" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Sectors</Link>
+            <Link href="/inbox" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Inbox</Link>
+            <Link href="/settings" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Settings</Link>
+            <Link href="/pricing" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Pricing</Link>
+            <Link href="/research" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Research</Link>
           </div>
         </nav>
       )}

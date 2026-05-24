@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { CommandPalette } from "@/components/command-palette";
+import { CurrencyProvider } from "@/components/currency-context";
 
 export const metadata: Metadata = {
   title: "GhanaWatch — Diaspora Trust & Verification Intelligence",
@@ -19,10 +20,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="min-h-screen bg-bg text-ink antialiased">
-        <Nav />
-        <CommandPalette />
-        <main className="min-h-[calc(100vh-180px)]">{children}</main>
-        <Footer />
+        <CurrencyProvider>
+          <Nav />
+          <CommandPalette />
+          <main className="min-h-[calc(100vh-180px)]">{children}</main>
+          <Footer />
+        </CurrencyProvider>
       </body>
     </html>
   );
