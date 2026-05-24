@@ -25,6 +25,8 @@ const moreGroups = [
       { href: "/parcel-draw", label: "Draw parcel boundary" },
       { href: "/ledger", label: "Ledger explorer" },
       { href: "/activity", label: "Live activity" },
+      { href: "/digest", label: "Digest builder" },
+      { href: "/templates", label: "Document templates" },
     ],
   },
   {
@@ -34,17 +36,19 @@ const moreGroups = [
       { href: "/review", label: "Analyst review desk" },
       { href: "/network", label: "Trustee network" },
       { href: "/network/become-a-trustee", label: "Become a trustee" },
+      { href: "/network/become-a-trustee/deep-kyc", label: "Trustee deep KYC" },
       { href: "/manager", label: "Manager bot preview" },
     ],
   },
   {
-    title: "Community & coverage",
+    title: "Community & build",
     items: [
       { href: "/community", label: "Hometown rooms" },
       { href: "/insurance", label: "Fraud insurance" },
       { href: "/mobile", label: "Mobile app preview" },
       { href: "/knowledge", label: "Fraud knowledge base" },
       { href: "/sectors", label: "Sectors" },
+      { href: "/developers", label: "API & webhooks" },
     ],
   },
 ];

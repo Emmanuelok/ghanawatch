@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { FileSearch, Camera, Flag, ScrollText, Users, ShieldAlert, Map } from "lucide-react";
+import { FileSearch, Camera, Flag, ScrollText, Users, ShieldAlert, Map, MessageCircle } from "lucide-react";
 
-type Tab = "docs" | "photos" | "map" | "milestones" | "ledger" | "cases" | "trustee";
+type Tab = "docs" | "photos" | "map" | "milestones" | "ledger" | "cases" | "trustee" | "chat";
 
 export function ProjectTabs({
   docsTab,
@@ -12,6 +12,7 @@ export function ProjectTabs({
   ledgerTab,
   casesTab,
   trusteeTab,
+  chatTab,
 }: {
   docsTab: React.ReactNode;
   photosTab: React.ReactNode;
@@ -20,12 +21,14 @@ export function ProjectTabs({
   ledgerTab: React.ReactNode;
   casesTab: React.ReactNode;
   trusteeTab: React.ReactNode;
+  chatTab: React.ReactNode;
 }) {
   const [tab, setTab] = useState<Tab>("docs");
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "docs", label: "Documents (forensics)", icon: FileSearch },
     { id: "photos", label: "Site evidence", icon: Camera },
     { id: "map", label: "Parcel map", icon: Map },
+    { id: "chat", label: "Chat", icon: MessageCircle },
     { id: "milestones", label: "Milestones / escrow", icon: Flag },
     { id: "ledger", label: "Audit ledger", icon: ScrollText },
     { id: "cases", label: "Forensic cases", icon: ShieldAlert },
@@ -58,6 +61,7 @@ export function ProjectTabs({
         {tab === "docs" && docsTab}
         {tab === "photos" && photosTab}
         {tab === "map" && mapTab}
+        {tab === "chat" && chatTab}
         {tab === "milestones" && milestonesTab}
         {tab === "ledger" && ledgerTab}
         {tab === "cases" && casesTab}

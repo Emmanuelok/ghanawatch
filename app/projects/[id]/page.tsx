@@ -39,6 +39,8 @@ import { Sparkline } from "@/components/sparkline";
 import { RiskExplainer } from "@/components/risk-explainer";
 import { ParcelMap } from "@/components/parcel-map";
 import { SignatoriesPanel } from "@/components/signatories";
+import { AssemblyAttestationCard, type AssemblyAttestation } from "@/components/assembly-attestation";
+import { ProjectChat } from "@/components/project-chat";
 import { PARCELS } from "@/lib/parcels";
 import { SIGNATORIES } from "@/lib/mock-data";
 import { ProjectTabs } from "./tabs";
@@ -181,8 +183,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       </div>
 
       {SIGNATORIES[project.id] && (
-        <div className="mt-4">
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <SignatoriesPanel signatories={SIGNATORIES[project.id]} />
+          <AssemblyAttestationCard a={buildAttestation(project.id, project.managedBy, project.location)} />
         </div>
       )}
 
@@ -326,6 +329,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             </div>
           )
         }
+        chatTab={<ProjectChat projectId={project.id} />}
       />
     </div>
   );
@@ -368,4 +372,42 @@ function Empty({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
+}
+
+function buildAttestation(projectId: string, manager: string, location: string): AssemblyAttestation {
+  const electoralArea =
+    projectId === "kasoa-4bed" ? "Akweley · Awutu Senya East"
+      : projectId === "east-legon-plot" ? "Adjiringanor · Ayawaso West"
+      : projectId === "kumasi-shop" ? "Adum · Subin"
+      : projectId === "ho-poultry" ? "Ho Central · Ho Municipal"
+      : projectId === "takoradi-funeral" ? "Effia · Effia-Kwesimintsim"
+      : projectId === "tamale-school" ? "Tamale South · Tamale Metropolitan"
+      : "Various";
+  const district = location.split(",").slice(-1)[0]?.trim() || "—";
+  const assemblyMember =
+    projectId === "kasoa-4bed" ? "Comfort Owusu-Pomaa"
+      : projectId === "east-legon-plot" ? "Edward Asante Boateng"
+      : projectId === "kumasi-shop" ? "Yaa Konadu Twumasi"
+      : projectId === "ho-poultry" ? "Mawuli Senanu Agbeko"
+      : projectId === "takoradi-funeral" ? "Esther Aidoo"
+      : projectId === "tamale-school" ? "Alhaji Ibrahim Tahidu"
+      : "—";
+  const docRef = `AM-ATT/2026/${projectId.slice(0, 5).toUpperCase()}-${Math.abs(hashCode(projectId)) % 10000}`;
+  return {
+    electoralArea,
+    district,
+    assemblyMember,
+    electedYear: 2023,
+    attestedFor: manager,
+    attestedAt: "2026-04-02",
+    documentRef: docRef,
+    contactNumber: "+233 24 555 " + (String(Math.abs(hashCode(projectId)) % 10000).padStart(4, "0")),
+    signatureHash: "0x" + Math.abs(hashCode(projectId + manager)).toString(16).padStart(10, "0").slice(0, 10) + "…",
+  };
+}
+
+function hashCode(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h;
 }
