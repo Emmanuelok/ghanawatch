@@ -1,0 +1,248 @@
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  AlertTriangle,
+  MapPin,
+  User,
+  Calendar,
+  Banknote,
+  Shield,
+  Globe2,
+  ShieldCheck,
+  FileSearch,
+  Camera,
+  GanttChartSquare,
+  MessageSquare,
+  ScrollText,
+} from "lucide-react";
+import {
+  getProject,
+  getDocsByProject,
+  getPhotosByProject,
+  getMilestonesByProject,
+  getAuditByProject,
+  getAlertsByProject,
+  TRUSTEES,
+} from "@/lib/mock-data";
+import { ProjectThumbnail } from "@/components/project-thumbnail";
+import { SectorBadge } from "@/components/sector-icon";
+import { RiskDial, TrustGauge } from "@/components/risk-dial";
+import { DocumentCard } from "@/components/document-card";
+import { SitePhotoCard } from "@/components/site-photo-card";
+import { AuditLedger } from "@/components/audit-ledger";
+import { MilestoneList } from "@/components/milestone-list";
+import { ProjectTabs } from "./tabs";
+
+export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const project = getProject(id);
+  if (!project) notFound();
+  const docs = getDocsByProject(id);
+  const photos = getPhotosByProject(id);
+  const milestones = getMilestonesByProject(id);
+  const audit = getAuditByProject(id);
+  const alerts = getAlertsByProject(id);
+
+  // Recommend a trustee based on sector
+  const trustee =
+    project.sector === "real-estate"
+      ? TRUSTEES.find((t) => t.id === "tr-2")
+      : project.sector === "construction"
+      ? TRUSTEES.find((t) => t.id === "tr-1")
+      : project.sector === "vehicle-import"
+      ? TRUSTEES.find((t) => t.id === "tr-5")
+      : project.sector === "medical"
+      ? TRUSTEES.find((t) => t.id === "tr-4")
+      : project.sector === "agriculture"
+      ? TRUSTEES.find((t) => t.id === "tr-6")
+      : TRUSTEES.find((t) => t.id === "tr-3");
+
+  return (
+    <div className="mx-auto max-w-7xl px-5 py-8">
+      <Link href="/projects" className="mb-6 inline-flex items-center gap-2 text-[12px] text-ink-dim hover:text-ink">
+        <ArrowLeft className="h-3.5 w-3.5" /> All projects
+      </Link>
+
+      {/* HERO */}
+      <div className="card overflow-hidden">
+        <ProjectThumbnail sector={project.sector} />
+        <div className="p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <SectorBadge sector={project.sector} />
+                <span className={`chip ${project.risk === "high" ? "risk-high" : project.risk === "med" ? "risk-med" : "risk-low"}`}>
+                  Risk {project.riskScore}
+                </span>
+                {alerts.length > 0 && (
+                  <span className="chip risk-high">
+                    <AlertTriangle className="h-3 w-3" /> {alerts.length} active alerts
+                  </span>
+                )}
+              </div>
+              <h1 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">{project.name}</h1>
+              <p className="mt-2 max-w-3xl text-[14px] text-ink-dim">{project.summary}</p>
+
+              <div className="mt-5 grid gap-4 text-[13px] md:grid-cols-3">
+                <Field icon={MapPin} label="Location" value={`${project.location}, ${project.region}`} />
+                <Field icon={Globe2} label="Diaspora owner" value={`${project.diasporaOwner} · ${project.ownerLocation}`} />
+                <Field icon={User} label="Managed by" value={`${project.managedBy} (${project.managedByRelation})`} />
+                <Field icon={Calendar} label="Timeline" value={`${project.startDate} → ${project.targetCompletion}`} />
+                <Field icon={Banknote} label="Budget" value={`GHS ${project.budgetGHS.toLocaleString()} (${Math.round((project.spentGHS / project.budgetGHS) * 100)}% deployed)`} />
+                <Field icon={GanttChartSquare} label="Progress" value={`${project.progress}%`} />
+              </div>
+            </div>
+
+            <div className="flex w-full items-center gap-6 rounded-xl border border-line bg-bg-elev/40 p-5 md:w-auto">
+              <RiskDial score={project.riskScore} />
+              <div className="min-w-[180px]">
+                <TrustGauge score={project.trustScore} />
+                <div className="mt-4 space-y-1.5 text-[12px]">
+                  <Row label="Milestones verified" value={`${project.verifiedMilestones}/${project.totalMilestones}`} />
+                  <Row label="Documents" value={`${docs.length}`} />
+                  <Row label="Site evidence" value={`${photos.length}`} />
+                  <Row label="Audit events" value={`${audit.length}`} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action bar */}
+          <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-line pt-5">
+            <button className="btn btn-primary"><Camera className="h-4 w-4" /> Request fresh site photo</button>
+            <button className="btn btn-ghost"><ShieldCheck className="h-4 w-4" /> Dispatch {trustee?.name.split(",")[0]}</button>
+            <button className="btn btn-ghost"><ScrollText className="h-4 w-4" /> Generate evidence pack</button>
+            <button className="btn btn-ghost"><MessageSquare className="h-4 w-4" /> Open investigator</button>
+          </div>
+        </div>
+      </div>
+
+      {/* ALERT BAR */}
+      {alerts.length > 0 && (
+        <div className="mt-6 rounded-xl border border-risk-high/30 bg-risk-high/5 p-5">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-risk-high" />
+            <div className="text-[14px] font-semibold text-risk-high">
+              {alerts.length} active alert{alerts.length > 1 ? "s" : ""} require your attention
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {alerts.map((a) => (
+              <div key={a.id} className="rounded-lg border border-line bg-bg-elev/60 p-3">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`chip ${a.severity === "critical" ? "risk-high" : "risk-med"}`}
+                    style={{ textTransform: "uppercase" }}
+                  >
+                    {a.severity}
+                  </span>
+                  <span className="text-[13px] font-semibold">{a.title}</span>
+                </div>
+                <p className="mt-1 text-[12px] text-ink-dim">{a.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TABS */}
+      <ProjectTabs
+        docsTab={
+          <div className="grid gap-3 md:grid-cols-2">
+            {docs.map((d) => (
+              <DocumentCard key={d.id} doc={d} />
+            ))}
+            {docs.length === 0 && <Empty>No documents uploaded yet.</Empty>}
+          </div>
+        }
+        photosTab={
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {photos.map((p) => (
+              <SitePhotoCard key={p.id} photo={p} />
+            ))}
+            {photos.length === 0 && <Empty>No site evidence yet — request a photo or dispatch a trustee.</Empty>}
+          </div>
+        }
+        milestonesTab={
+          milestones.length > 0 ? <MilestoneList milestones={milestones} /> : <Empty>No milestones defined.</Empty>
+        }
+        ledgerTab={<AuditLedger events={audit} />}
+        trusteeTab={
+          trustee && (
+            <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+              <div className="card p-6">
+                <div className="flex items-start gap-4">
+                  <div className="grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-accent-gold to-accent-green text-[16px] font-semibold text-bg">
+                    {trustee.avatar}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-[16px] font-semibold">{trustee.name}</div>
+                    <div className="text-[13px] text-ink-dim">{trustee.profession}</div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                      <span className="chip"><Shield className="h-3 w-3" /> Verified by {trustee.verifiedBy}</span>
+                      <span className="chip">★ {trustee.rating}</span>
+                      <span className="chip">{trustee.jobsCompleted} jobs · {trustee.yearsActive}y experience</span>
+                    </div>
+                    <p className="mt-3 text-[13px] text-ink-dim">{trustee.bio}</p>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {trustee.specialties.map((s) => (
+                        <span key={s} className="chip">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6 grid grid-cols-2 gap-4 border-t border-line pt-5 text-[13px]">
+                  <Row label="Region" value={trustee.region} />
+                  <Row label="Fee range" value={trustee.feeRange} />
+                </div>
+                <div className="mt-5 flex gap-2">
+                  <button className="btn btn-primary">Dispatch within 72h</button>
+                  <button className="btn btn-ghost">Message</button>
+                </div>
+              </div>
+              <div className="card p-5">
+                <div className="text-[14px] font-semibold">How trustee dispatch works</div>
+                <ol className="mt-3 space-y-3 text-[13px] text-ink-dim">
+                  <li><strong className="text-ink">1.</strong> You approve a scope (photos, BOQ check, boundary survey, ward visit).</li>
+                  <li><strong className="text-ink">2.</strong> Trustee accepts in &lt; 24h; deposit held in escrow.</li>
+                  <li><strong className="text-ink">3.</strong> On-site visit within 72h. Geo-stamped photos + signed report uploaded.</li>
+                  <li><strong className="text-ink">4.</strong> Report becomes a ledger event; fee released on your sign-off.</li>
+                </ol>
+              </div>
+            </div>
+          )
+        }
+      />
+    </div>
+  );
+}
+
+function Field({ icon: Icon, label, value }: any) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-muted" />
+      <div className="min-w-0">
+        <div className="text-[11px] uppercase tracking-[0.1em] text-ink-muted">{label}</div>
+        <div className="truncate text-[13px] text-ink">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between">
+      <span className="text-ink-muted">{label}</span>
+      <span className="font-semibold text-ink">{value}</span>
+    </div>
+  );
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="card grid place-items-center px-6 py-16 text-center text-[13px] text-ink-dim">
+      {children}
+    </div>
+  );
+}
