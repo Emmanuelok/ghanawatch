@@ -118,7 +118,7 @@ export default function Dashboard() {
             <div className="text-[14px] font-semibold">Map of investments</div>
             <Link href="/map" className="text-[12px] text-ink-dim hover:text-ink"><MapIcon className="inline h-3 w-3" /> Open map</Link>
           </div>
-          <GhanaMap projects={PROJECTS} height={260} showRegions={false} />
+          <GhanaMap projects={PROJECTS} height={260} showLabels={false} showLegend={false} />
         </div>
       </div>
 
