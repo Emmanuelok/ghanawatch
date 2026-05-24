@@ -11,6 +11,11 @@ import type {
   Benchmark,
   Notification,
   Region,
+  HumanReview,
+  Signatory,
+  TrusteeApplication,
+  LiveEvent,
+  HometownRoom,
 } from "./types";
 import { chainHash, fakeSig, shortHash } from "./hash";
 
@@ -1198,6 +1203,150 @@ export const REGION_RISK: Record<string, { riskScore: number; activeProjects: nu
   "Savannah": { riskScore: 21, activeProjects: 11, openCases: 0 },
   "North East": { riskScore: 20, activeProjects: 7, openCases: 0 },
 };
+
+// ---- Human review queue ----
+export const HUMAN_REVIEWS: HumanReview[] = [
+  {
+    id: "hr-1",
+    caseId: "case-1",
+    projectId: "east-legon-plot",
+    reviewer: { id: "an-1", name: "Ama Sarpong", role: "Senior Forensic Analyst", license: "Bar-GH 2014-822" },
+    status: "pending",
+    aiVerdict: "Title overlap + signature variance + on-site encroachment — high confidence fraud pattern.",
+    aiConfidence: 92,
+    slaHours: 6,
+    evidenceReviewed: 0,
+    priority: "critical",
+  },
+  {
+    id: "hr-2",
+    caseId: "case-2",
+    projectId: "kasoa-4bed",
+    reviewer: { id: "an-2", name: "Kwesi Adjei", role: "Construction Forensic Analyst", license: "GhIS 2017-441" },
+    status: "approved",
+    aiVerdict: "Receipt forensics + off-site photo cluster — likely diverted milestone funds.",
+    aiConfidence: 78,
+    analystVerdict: "Confirmed — recommend pausing M5 disbursement and dispatching trustee for surprise audit.",
+    analystNote: "I reviewed the cement receipt against 6 prior verified Diamond Cement receipts. Font shift confirmed. Pattern matches a phantom-progress case I worked in 2024. Aligned with AI recommendation.",
+    decisionAt: minus(1),
+    slaHours: 24,
+    evidenceReviewed: 8,
+    priority: "high",
+  },
+  {
+    id: "hr-3",
+    caseId: "case-1",
+    projectId: "east-legon-plot",
+    reviewer: { id: "an-1", name: "Ama Sarpong", role: "Senior Forensic Analyst", license: "Bar-GH 2014-822" },
+    status: "more-evidence",
+    aiVerdict: "Stool elder signature variance: 22% vs reference samples.",
+    aiConfidence: 71,
+    analystVerdict: "Inconclusive without 3 more reference samples from 2018-2020.",
+    analystNote: "Requesting the LC archive team to pull 3 more samples. Will reconvene Friday.",
+    decisionAt: minus(3),
+    slaHours: 48,
+    evidenceReviewed: 5,
+    priority: "high",
+  },
+];
+
+// ---- Signatories per project ----
+export const SIGNATORIES: Record<string, Signatory[]> = {
+  "kasoa-4bed": [
+    { id: "sg-1", name: "Akosua Mensah", role: "diaspora-owner", status: "signed", verifiedIdentity: true, contact: "akosua@example.com", signedAt: minus(140) },
+    { id: "sg-2", name: "Mr. Joseph Mensah", role: "next-of-kin", status: "signed", verifiedIdentity: true, contact: "+233 24 555 0142", signedAt: minus(139) },
+    { id: "sg-3", name: "Kojo Owusu, MGhIS", role: "trustee", status: "signed", verifiedIdentity: true, contact: "kojo.owusu@trustee.gw", signedAt: minus(95) },
+    { id: "sg-4", name: "Esi Ofori, Esq.", role: "lawyer", status: "pending", verifiedIdentity: true, contact: "esi@oforilegal.gh" },
+  ],
+  "east-legon-plot": [
+    { id: "sg-5", name: "Nana Yaw Boateng", role: "diaspora-owner", status: "signed", verifiedIdentity: true, contact: "nanayaw@example.com", signedAt: minus(60) },
+    { id: "sg-6", name: "Aunt Akua Boateng", role: "next-of-kin", status: "signed", verifiedIdentity: true, contact: "+233 20 555 0188", signedAt: minus(59) },
+    { id: "sg-7", name: "Esi Ofori, Esq.", role: "lawyer", status: "signed", verifiedIdentity: true, contact: "esi@oforilegal.gh", signedAt: minus(58) },
+    { id: "sg-8", name: "Akua Yawson", role: "trustee", status: "signed", verifiedIdentity: true, contact: "akua@yawsonsurvey.gh", signedAt: minus(4) },
+    { id: "sg-9", name: "Auntie Esther (witness)", role: "witness", status: "declined", verifiedIdentity: false, contact: "+233 27 555 9982" },
+  ],
+};
+
+// ---- Trustee applications (accreditation pipeline) ----
+export const TRUSTEE_APPLICATIONS: TrusteeApplication[] = [
+  { id: "ta-1", applicant: "Yaw Asare", profession: "Quantity Surveyor", yearsExperience: 12, region: "Ashanti", licenseAuthority: "Ghana Institution of Surveyors", licenseNumber: "GhIS-2013-1041", stage: "skill-test", appliedAt: minus(4) },
+  { id: "ta-2", applicant: "Doris Asiedu", profession: "Conveyancing Lawyer", yearsExperience: 7, region: "Greater Accra", licenseAuthority: "General Legal Council", licenseNumber: "GLC-2018-3309", stage: "references", appliedAt: minus(11) },
+  { id: "ta-3", applicant: "Kwame Tetteh", profession: "Customs Clearing Agent", yearsExperience: 15, region: "Tema", licenseAuthority: "GRA / Customs Division", licenseNumber: "CG-2010-118", stage: "background-check", appliedAt: minus(2) },
+  { id: "ta-4", applicant: "Dr. Adwoa Aidoo", profession: "Medical Care Coordinator", yearsExperience: 20, region: "Greater Accra", licenseAuthority: "Medical & Dental Council", licenseNumber: "MDC-2005-0917", stage: "approved", appliedAt: minus(60) },
+];
+
+// ---- Live activity feed (rolling) ----
+export const LIVE_EVENTS: LiveEvent[] = [
+  { id: "le-1", ts: minus(0, 0.1), category: "verify", message: "Diamond Cement receipt verified for project 'Tamale 3-Bed Build' (98% authenticity)", region: "Northern", amountGHS: 4250 },
+  { id: "le-2", ts: minus(0, 0.2), category: "site", message: "Drone overhead by trustee F. Adeli — Ho poultry farm coop roofing 80% confirmed", region: "Volta" },
+  { id: "le-3", ts: minus(0, 0.3), category: "kyc", message: "Diaspora user verified — Ghana Card + selfie liveness passed", region: "Greater Accra" },
+  { id: "le-4", ts: minus(0, 0.6), category: "case", message: "Forensic case opened — duplicate-receipt pattern in Adum business setup", region: "Ashanti" },
+  { id: "le-5", ts: minus(0, 1), category: "payment", message: "Milestone 4 released for Kasoa 4-Bed Build (GHS 140,000) — trustee verified", region: "Central", amountGHS: 140000 },
+  { id: "le-6", ts: minus(0, 1.5), category: "doc", message: "Bill of Lading verified for Tema-bound shipment (Volkswagen Passat)", region: "Greater Accra" },
+  { id: "le-7", ts: minus(0, 2), category: "trustee", message: "Trustee Kojo Owusu accepted dispatch (Kasoa M5 re-verification, ETA 24h)", region: "Central" },
+  { id: "le-8", ts: minus(0, 3), category: "system", message: "Daily audit ledger hash committed (0xae34f8…91d2c0)" },
+  { id: "le-9", ts: minus(0, 4), category: "verify", message: "Korle Bu surgery bill cross-matched with hospital portal — 99% confidence", region: "Greater Accra", amountGHS: 18500 },
+  { id: "le-10", ts: minus(0, 5), category: "site", message: "Off-parcel photo flagged on Kumasi shop fit-out (1.4 km off registered address)", region: "Ashanti" },
+];
+
+// ---- Hometown rooms ----
+export const HOMETOWN_ROOMS: HometownRoom[] = [
+  {
+    id: "ht-1",
+    name: "Kasoa Sons & Daughters (Toronto)",
+    region: "Central",
+    members: 184,
+    activeProjects: 27,
+    pooledGHS: 612000,
+    description: "Diaspora from Kasoa & environs based in the GTA. We co-fund 3 community projects + verify each other's individual builds.",
+    lastMessage: { actor: "Akosua M.", text: "Trustee Kojo did the M4 visit on Saturday — drone footage is in the ledger.", ts: minus(0, 6) },
+    verified: true,
+  },
+  {
+    id: "ht-2",
+    name: "Adum Trade Collective (Hamburg)",
+    region: "Ashanti",
+    members: 56,
+    activeProjects: 14,
+    pooledGHS: 224000,
+    description: "Hamburg-based traders pooling capital for stalls in Adum and Asafo markets.",
+    lastMessage: { actor: "Esi F.", text: "Auntie Grace got the duplicate-receipt flag again. We need to talk.", ts: minus(0, 11) },
+    verified: true,
+  },
+  {
+    id: "ht-3",
+    name: "Ho Vol-Tribes (Atlanta)",
+    region: "Volta",
+    members: 89,
+    activeProjects: 19,
+    pooledGHS: 388000,
+    description: "Volta diaspora in the US South. Poultry, cassava, smoked fish — agriculture-first.",
+    lastMessage: { actor: "Mawuli A.", text: "Drone confirms coop dimensions. M3 release approved.", ts: minus(1) },
+    verified: true,
+  },
+  {
+    id: "ht-4",
+    name: "East Legon Hills Owners (London)",
+    region: "Greater Accra",
+    members: 312,
+    activeProjects: 44,
+    pooledGHS: 4_120_000,
+    description: "Diaspora owners of plots in East Legon Hills, Adjiringanor, Trasacco-adjacent estates.",
+    lastMessage: { actor: "Nana Yaw B.", text: "If your indenture was issued via Nii Agyemang 2023-2025, please DM. Possible cluster.", ts: minus(0, 18) },
+    verified: true,
+  },
+  {
+    id: "ht-5",
+    name: "Tamale Family Network (Manchester)",
+    region: "Northern",
+    members: 41,
+    activeProjects: 9,
+    pooledGHS: 86000,
+    description: "Tamale-area diaspora in the North-West UK. School fees, medical, small business.",
+    lastMessage: { actor: "Hawa M.", text: "TaSec fees verified. Bro Yakubu attended PTA, photo + signed form on ledger.", ts: minus(2) },
+    verified: false,
+  },
+];
 
 // Portfolio-level time series
 export const PORTFOLIO_TRUST_HISTORY = genSeries(90, 65, 4, 0.15);

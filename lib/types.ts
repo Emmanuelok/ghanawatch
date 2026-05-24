@@ -218,3 +218,100 @@ export type Notification = {
   projectId?: string;
   read: boolean;
 };
+
+// ---- Human verification layer ----
+
+export type IdentityVerification = {
+  id: string;
+  userId: string;
+  status: "unstarted" | "in-review" | "verified" | "rejected" | "expired";
+  level: "basic" | "enhanced" | "regulated";
+  idType: "ghana-card" | "passport" | "drivers-license" | "voter-id" | "other";
+  idNumber?: string;
+  fullName: string;
+  dob?: string;
+  nationality: string;
+  selfieMatch?: number; // 0-100
+  livenessPass?: boolean;
+  phoneVerified?: boolean;
+  addressVerified?: boolean;
+  amlClear?: boolean;
+  pepCheck?: boolean;
+  verifiedAt?: string;
+  expiresAt?: string;
+  reviewer?: string;
+};
+
+export type HumanReview = {
+  id: string;
+  caseId: string;
+  projectId: string;
+  reviewer: { id: string; name: string; role: string; license: string };
+  status: "pending" | "approved" | "rejected" | "escalated" | "more-evidence";
+  aiVerdict: string;
+  aiConfidence: number;
+  analystVerdict?: string;
+  analystNote?: string;
+  decisionAt?: string;
+  slaHours: number;
+  evidenceReviewed: number;
+  priority: "low" | "med" | "high" | "critical";
+};
+
+export type Signatory = {
+  id: string;
+  name: string;
+  role: "diaspora-owner" | "next-of-kin" | "co-investor" | "trustee" | "lawyer" | "witness";
+  status: "pending" | "signed" | "declined";
+  verifiedIdentity: boolean;
+  contact: string;
+  signedAt?: string;
+};
+
+export type TrusteeApplication = {
+  id: string;
+  applicant: string;
+  profession: string;
+  yearsExperience: number;
+  region: string;
+  licenseAuthority: string;
+  licenseNumber: string;
+  stage: "submitted" | "license-check" | "background-check" | "skill-test" | "references" | "approved" | "rejected";
+  appliedAt: string;
+};
+
+// ---- Live activity feed ----
+
+export type LiveEvent = {
+  id: string;
+  ts: string;
+  category: "verify" | "site" | "doc" | "payment" | "trustee" | "case" | "kyc" | "system";
+  message: string;
+  region?: string;
+  amountGHS?: number;
+};
+
+// ---- Insurance ----
+
+export type InsuranceQuote = {
+  baseRate: number;
+  riskMultiplier: number;
+  trusteePresenceDiscount: number;
+  premiumAnnualGHS: number;
+  coverageMaxGHS: number;
+  deductibleGHS: number;
+};
+
+// ---- Hometown community rooms ----
+
+export type HometownRoom = {
+  id: string;
+  name: string;
+  region: string;
+  members: number;
+  activeProjects: number;
+  pooledGHS: number;
+  description: string;
+  lastMessage?: { actor: string; text: string; ts: string };
+  verified: boolean;
+};

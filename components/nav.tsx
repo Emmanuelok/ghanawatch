@@ -1,26 +1,68 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Shield, Menu, X, Search, Command } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Shield, Menu, X, Search, Command, ChevronDown } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { CurrencySelector } from "./currency-context";
 
-const links = [
+const primary = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/projects", label: "Projects" },
   { href: "/map", label: "Map" },
   { href: "/cases", label: "Cases" },
   { href: "/verify", label: "Verify" },
   { href: "/investigator", label: "AI" },
-  { href: "/tools", label: "Tools" },
-  { href: "/knowledge", label: "Knowledge" },
-  { href: "/network", label: "Trustees" },
+];
+
+const moreGroups = [
+  {
+    title: "Tools",
+    items: [
+      { href: "/tools", label: "All tools" },
+      { href: "/tools/vehicle-duty", label: "Vehicle duty calculator" },
+      { href: "/benchmarks", label: "Market benchmarks" },
+      { href: "/parcel-draw", label: "Draw parcel boundary" },
+      { href: "/ledger", label: "Ledger explorer" },
+      { href: "/activity", label: "Live activity" },
+    ],
+  },
+  {
+    title: "Trust & people",
+    items: [
+      { href: "/identity", label: "Identity / KYC" },
+      { href: "/review", label: "Analyst review desk" },
+      { href: "/network", label: "Trustee network" },
+      { href: "/network/become-a-trustee", label: "Become a trustee" },
+      { href: "/manager", label: "Manager bot preview" },
+    ],
+  },
+  {
+    title: "Community & coverage",
+    items: [
+      { href: "/community", label: "Hometown rooms" },
+      { href: "/insurance", label: "Fraud insurance" },
+      { href: "/mobile", label: "Mobile app preview" },
+      { href: "/knowledge", label: "Fraud knowledge base" },
+      { href: "/sectors", label: "Sectors" },
+    ],
+  },
 ];
 
 export function Nav() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3">
@@ -37,7 +79,7 @@ export function Nav() {
         </Link>
 
         <nav className="hidden items-center gap-0.5 xl:flex">
-          {links.map((l) => {
+          {primary.map((l) => {
             const active = path === l.href || (l.href !== "/" && path?.startsWith(l.href));
             return (
               <Link
@@ -51,6 +93,37 @@ export function Nav() {
               </Link>
             );
           })}
+          <div ref={moreRef} className="relative">
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[13px] text-ink-dim hover:bg-bg-elev hover:text-ink"
+            >
+              More <ChevronDown className="h-3 w-3" />
+            </button>
+            {moreOpen && (
+              <div className="absolute right-0 top-9 z-50 w-[640px] overflow-hidden rounded-xl border border-line bg-bg-card shadow-2xl">
+                <div className="grid grid-cols-3 divide-x divide-line">
+                  {moreGroups.map((g) => (
+                    <div key={g.title} className="p-4">
+                      <div className="mb-2 text-[10px] uppercase tracking-[0.14em] text-ink-muted">{g.title}</div>
+                      <div className="space-y-0.5">
+                        {g.items.map((it) => (
+                          <Link
+                            key={it.href}
+                            href={it.href}
+                            onClick={() => setMoreOpen(false)}
+                            className="block rounded-md px-2 py-1.5 text-[13px] text-ink-dim hover:bg-bg-elev hover:text-ink"
+                          >
+                            {it.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -86,7 +159,7 @@ export function Nav() {
       {open && (
         <nav className="border-t border-line bg-bg-elev xl:hidden">
           <div className="mx-auto grid max-w-7xl gap-1 px-5 py-3">
-            {links.map((l) => {
+            {primary.map((l) => {
               const active = path === l.href || (l.href !== "/" && path?.startsWith(l.href));
               return (
                 <Link
@@ -101,14 +174,16 @@ export function Nav() {
                 </Link>
               );
             })}
-            <Link href="/ledger" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Ledger</Link>
-            <Link href="/benchmarks" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Benchmarks</Link>
-            <Link href="/manager" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Manager bot</Link>
-            <Link href="/sectors" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Sectors</Link>
-            <Link href="/inbox" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Inbox</Link>
-            <Link href="/settings" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Settings</Link>
-            <Link href="/pricing" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Pricing</Link>
-            <Link href="/research" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim">Research</Link>
+            {moreGroups.flatMap((g) => g.items).map((it) => (
+              <Link
+                key={it.href}
+                href={it.href}
+                onClick={() => setOpen(false)}
+                className="rounded-md px-3 py-2 text-[13.5px] text-ink-dim"
+              >
+                {it.label}
+              </Link>
+            ))}
           </div>
         </nav>
       )}

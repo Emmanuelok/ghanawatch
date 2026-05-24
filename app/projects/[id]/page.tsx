@@ -38,7 +38,9 @@ import { TimeSeries } from "@/components/timeseries";
 import { Sparkline } from "@/components/sparkline";
 import { RiskExplainer } from "@/components/risk-explainer";
 import { ParcelMap } from "@/components/parcel-map";
+import { SignatoriesPanel } from "@/components/signatories";
 import { PARCELS } from "@/lib/parcels";
+import { SIGNATORIES } from "@/lib/mock-data";
 import { ProjectTabs } from "./tabs";
 import { ProjectActions } from "./project-actions";
 
@@ -155,7 +157,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* TRUST + RISK CHART + EXPLAINER */}
+      {/* TRUST + RISK CHART + EXPLAINER + SIGNATORIES */}
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <div className="card p-5">
           <div className="mb-3 flex items-center justify-between">
@@ -177,6 +179,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </div>
         <RiskExplainer project={project} />
       </div>
+
+      {SIGNATORIES[project.id] && (
+        <div className="mt-4">
+          <SignatoriesPanel signatories={SIGNATORIES[project.id]} />
+        </div>
+      )}
 
       {benchmarks.length > 0 && (
         <div className="mt-4 card p-5">
