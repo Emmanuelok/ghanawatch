@@ -10,11 +10,11 @@ import {
   Shield,
   Globe2,
   ShieldCheck,
-  FileSearch,
   Camera,
   GanttChartSquare,
   MessageSquare,
   ScrollText,
+  TrendingUp,
 } from "lucide-react";
 import {
   getProject,
@@ -23,7 +23,9 @@ import {
   getMilestonesByProject,
   getAuditByProject,
   getAlertsByProject,
+  getCasesByProject,
   TRUSTEES,
+  BENCHMARKS,
 } from "@/lib/mock-data";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
 import { SectorBadge } from "@/components/sector-icon";
@@ -32,7 +34,10 @@ import { DocumentCard } from "@/components/document-card";
 import { SitePhotoCard } from "@/components/site-photo-card";
 import { AuditLedger } from "@/components/audit-ledger";
 import { MilestoneList } from "@/components/milestone-list";
+import { TimeSeries } from "@/components/timeseries";
+import { Sparkline } from "@/components/sparkline";
 import { ProjectTabs } from "./tabs";
+import { ProjectActions } from "./project-actions";
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -43,8 +48,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const milestones = getMilestonesByProject(id);
   const audit = getAuditByProject(id);
   const alerts = getAlertsByProject(id);
+  const cases = getCasesByProject(id);
 
-  // Recommend a trustee based on sector
   const trustee =
     project.sector === "real-estate"
       ? TRUSTEES.find((t) => t.id === "tr-2")
@@ -58,13 +63,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       ? TRUSTEES.find((t) => t.id === "tr-6")
       : TRUSTEES.find((t) => t.id === "tr-3");
 
+  const benchmarks = relevantBenchmarks(project.sector);
+
   return (
     <div className="mx-auto max-w-7xl px-5 py-8">
       <Link href="/projects" className="mb-6 inline-flex items-center gap-2 text-[12px] text-ink-dim hover:text-ink">
         <ArrowLeft className="h-3.5 w-3.5" /> All projects
       </Link>
 
-      {/* HERO */}
       <div className="card overflow-hidden">
         <ProjectThumbnail sector={project.sector} />
         <div className="p-6">
@@ -79,6 +85,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                   <span className="chip risk-high">
                     <AlertTriangle className="h-3 w-3" /> {alerts.length} active alerts
                   </span>
+                )}
+                {cases.length > 0 && (
+                  <Link href={`/cases/${cases[0].id}`} className="chip risk-high hover:opacity-90">
+                    <Shield className="h-3 w-3" /> {cases.length} forensic case{cases.length > 1 ? "s" : ""}
+                  </Link>
                 )}
               </div>
               <h1 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">{project.name}</h1>
@@ -98,6 +109,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               <RiskDial score={project.riskScore} />
               <div className="min-w-[180px]">
                 <TrustGauge score={project.trustScore} />
+                <div className="mt-2"><Sparkline data={project.trustHistory.slice(-40)} color="#10b981" width={180} height={28} /></div>
                 <div className="mt-4 space-y-1.5 text-[12px]">
                   <Row label="Milestones verified" value={`${project.verifiedMilestones}/${project.totalMilestones}`} />
                   <Row label="Documents" value={`${docs.length}`} />
@@ -108,13 +120,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          {/* Action bar */}
-          <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-line pt-5">
-            <button className="btn btn-primary"><Camera className="h-4 w-4" /> Request fresh site photo</button>
-            <button className="btn btn-ghost"><ShieldCheck className="h-4 w-4" /> Dispatch {trustee?.name.split(",")[0]}</button>
-            <button className="btn btn-ghost"><ScrollText className="h-4 w-4" /> Generate evidence pack</button>
-            <button className="btn btn-ghost"><MessageSquare className="h-4 w-4" /> Open investigator</button>
-          </div>
+          <ProjectActions projectId={project.id} projectName={project.name} trustee={trustee!} />
         </div>
       </div>
 
@@ -146,7 +152,46 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* TABS */}
+      {/* TRUST + RISK CHART */}
+      <div className="mt-6 grid gap-4 md:grid-cols-[2fr_1fr]">
+        <div className="card p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <div className="text-[14px] font-semibold">Trust score · risk score</div>
+              <div className="text-[11px] text-ink-dim">Since project creation, daily snapshot</div>
+            </div>
+            <span className="chip"><TrendingUp className="h-3 w-3" /> Updated 4h ago</span>
+          </div>
+          <TimeSeries
+            height={180}
+            yMin={0}
+            yMax={100}
+            series={[
+              { name: "Trust", color: "#10b981", data: project.trustHistory },
+              { name: "Risk", color: "#ef4444", data: project.riskHistory },
+            ]}
+          />
+        </div>
+        <div className="card p-5">
+          <div className="text-[14px] font-semibold">Sector benchmarks</div>
+          <div className="text-[11px] text-ink-dim">Median market rates for this project's sector / region</div>
+          <div className="mt-3 space-y-2">
+            {benchmarks.length === 0 && <div className="text-[12px] text-ink-muted">No benchmarks for this sector yet.</div>}
+            {benchmarks.map((b) => (
+              <div key={b.id} className="rounded-md border border-line bg-bg-elev/40 p-3 text-[12px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-ink">{b.item}</span>
+                  <span className="font-semibold text-ink">GHS {b.medianGHS.toLocaleString()}</span>
+                </div>
+                <div className="mt-1 text-[11px] text-ink-muted">
+                  per {b.unit} · {b.region} · p10 {b.p10.toLocaleString()} / p90 {b.p90.toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <ProjectTabs
         docsTab={
           <div className="grid gap-3 md:grid-cols-2">
@@ -168,6 +213,31 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           milestones.length > 0 ? <MilestoneList milestones={milestones} /> : <Empty>No milestones defined.</Empty>
         }
         ledgerTab={<AuditLedger events={audit} />}
+        casesTab={
+          cases.length === 0 ? (
+            <Empty>No forensic cases open. Threshold-crossing signals will auto-open one.</Empty>
+          ) : (
+            <div className="space-y-3">
+              {cases.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/cases/${c.id}`}
+                  className="card card-hover block p-5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="chip risk-high uppercase tracking-wider">{c.severity}</span>
+                    <span className="chip">{c.status.replace("-", " ")}</span>
+                  </div>
+                  <div className="mt-2 text-[15px] font-semibold">{c.title}</div>
+                  <p className="mt-1 text-[13px] text-ink-dim">{c.summary}</p>
+                  <div className="mt-3 text-[11px] text-ink-muted">
+                    Lead: {c.lead} · Exposure: GHS {c.potentialLossGHS.toLocaleString()}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )
+        }
         trusteeTab={
           trustee && (
             <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -183,6 +253,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                       <span className="chip"><Shield className="h-3 w-3" /> Verified by {trustee.verifiedBy}</span>
                       <span className="chip">★ {trustee.rating}</span>
                       <span className="chip">{trustee.jobsCompleted} jobs · {trustee.yearsActive}y experience</span>
+                      {trustee.availableNow && <span className="chip risk-low">Available now</span>}
                     </div>
                     <p className="mt-3 text-[13px] text-ink-dim">{trustee.bio}</p>
                     <div className="mt-3 flex flex-wrap gap-1.5">
@@ -195,10 +266,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                 <div className="mt-6 grid grid-cols-2 gap-4 border-t border-line pt-5 text-[13px]">
                   <Row label="Region" value={trustee.region} />
                   <Row label="Fee range" value={trustee.feeRange} />
-                </div>
-                <div className="mt-5 flex gap-2">
-                  <button className="btn btn-primary">Dispatch within 72h</button>
-                  <button className="btn btn-ghost">Message</button>
+                  <Row label="Typical response" value={`${trustee.responseHours}h`} />
                 </div>
               </div>
               <div className="card p-5">
@@ -216,6 +284,16 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       />
     </div>
   );
+}
+
+function relevantBenchmarks(sector: string) {
+  if (sector === "construction") return BENCHMARKS.filter((b) => ["material","labor"].includes(b.category)).slice(0, 5);
+  if (sector === "real-estate") return BENCHMARKS.filter((b) => b.category === "labor").slice(0, 3);
+  if (sector === "vehicle-import") return BENCHMARKS.filter((b) => b.category === "import-duty");
+  if (sector === "funeral") return BENCHMARKS.filter((b) => b.category === "funeral");
+  if (sector === "medical") return BENCHMARKS.filter((b) => b.category === "medical");
+  if (sector === "education") return BENCHMARKS.filter((b) => b.category === "education");
+  return [];
 }
 
 function Field({ icon: Icon, label, value }: any) {

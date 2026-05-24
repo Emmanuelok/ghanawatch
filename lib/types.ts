@@ -11,12 +11,32 @@ export type Sector =
 
 export type Risk = "low" | "med" | "high";
 
+export type Region =
+  | "Greater Accra"
+  | "Ashanti"
+  | "Central"
+  | "Eastern"
+  | "Western"
+  | "Volta"
+  | "Northern"
+  | "Bono"
+  | "Upper East"
+  | "Upper West"
+  | "Oti"
+  | "Western North"
+  | "Bono East"
+  | "Ahafo"
+  | "Savannah"
+  | "North East";
+
 export type Project = {
   id: string;
   name: string;
   sector: Sector;
   location: string;
-  region: string;
+  region: Region | string;
+  lat: number;
+  lng: number;
   diasporaOwner: string;
   ownerLocation: string;
   managedBy: string;
@@ -35,6 +55,8 @@ export type Project = {
   alerts: number;
   thumbnail: string;
   summary: string;
+  trustHistory: { d: string; v: number }[];
+  riskHistory: { d: string; v: number }[];
 };
 
 export type Document = {
@@ -124,6 +146,7 @@ export type Alert = {
   detail: string;
   ts: string;
   category: string;
+  read?: boolean;
 };
 
 export type Trustee = {
@@ -140,4 +163,58 @@ export type Trustee = {
   feeRange: string;
   avatar: string;
   bio: string;
+  responseHours: number;
+  availableNow: boolean;
+};
+
+export type ForensicCase = {
+  id: string;
+  projectId: string;
+  title: string;
+  status: "open" | "investigating" | "evidence-gathering" | "escalated" | "resolved" | "closed";
+  severity: "low" | "med" | "high" | "critical";
+  openedAt: string;
+  lastUpdated: string;
+  lead: string;
+  summary: string;
+  hypothesis: string;
+  evidenceItemIds: string[];
+  timeline: { ts: string; actor: string; note: string }[];
+  recommendedActions: string[];
+  potentialLossGHS: number;
+};
+
+export type FraudPattern = {
+  id: string;
+  name: string;
+  sector: Sector | "any";
+  region: string;
+  prevalence: "rare" | "common" | "endemic";
+  signals: string[];
+  countermeasures: string[];
+  caseExamples: string[];
+  refUrl?: string;
+};
+
+export type Benchmark = {
+  id: string;
+  category: "material" | "service" | "labor" | "import-duty" | "medical" | "funeral" | "education";
+  item: string;
+  unit: string;
+  region: string;
+  medianGHS: number;
+  p10: number;
+  p90: number;
+  updated: string;
+};
+
+export type Notification = {
+  id: string;
+  kind: "alert" | "verify" | "trustee" | "milestone" | "doc" | "ledger" | "system";
+  severity?: "info" | "warning" | "critical";
+  title: string;
+  body: string;
+  ts: string;
+  projectId?: string;
+  read: boolean;
 };

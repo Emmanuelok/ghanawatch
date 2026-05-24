@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
+import { CommandPalette } from "@/components/command-palette";
 
 export const metadata: Metadata = {
   title: "GhanaWatch — Diaspora Trust & Verification Intelligence",
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen bg-bg text-ink antialiased">
         <Nav />
+        <CommandPalette />
         <main className="min-h-[calc(100vh-180px)]">{children}</main>
         <Footer />
       </body>

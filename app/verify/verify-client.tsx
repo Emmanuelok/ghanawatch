@@ -1,6 +1,16 @@
 "use client";
-import { useState } from "react";
-import { Loader2, ShieldAlert, ShieldCheck, Fingerprint, Upload, FileText } from "lucide-react";
+import { useState, useRef } from "react";
+import {
+  Loader2,
+  ShieldAlert,
+  ShieldCheck,
+  Fingerprint,
+  Upload,
+  FileText,
+  Image as ImageIcon,
+  X,
+  Sparkles,
+} from "lucide-react";
 
 type Result = {
   verdict: "verified" | "flagged" | "rejected";
@@ -15,6 +25,7 @@ type Result = {
     metadataIntact: boolean;
     vendorPatternMatch: boolean;
   };
+  extractedFields?: Record<string, string>;
   recommendation: string;
   hash: string;
 };
@@ -30,12 +41,34 @@ const EXAMPLES = [
 export function VerifyClient() {
   const [text, setText] = useState("");
   const [type, setType] = useState("receipt");
+  const [image, setImage] = useState<string | null>(null);
+  const [imageName, setImageName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [drag, setDrag] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function pickFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setErr("Please upload an image (JPG, PNG, WebP)");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      setErr("Image too large (max 6MB). Try compressing it first.");
+      return;
+    }
+    setErr(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImage(reader.result as string);
+      setImageName(file.name);
+    };
+    reader.readAsDataURL(file);
+  }
 
   async function submit() {
-    if (!text.trim()) return;
+    if (!text.trim() && !image) return;
     setLoading(true);
     setErr(null);
     setResult(null);
@@ -43,7 +76,7 @@ export function VerifyClient() {
       const res = await fetch("/api/verify-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, type }),
+        body: JSON.stringify({ text, type, image }),
       });
       if (!res.ok) throw new Error("Verification engine error");
       const data = (await res.json()) as Result;
@@ -75,20 +108,78 @@ export function VerifyClient() {
             <option value="id">ID / KYC document</option>
           </select>
         </div>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={6}
-          placeholder="Describe the document — vendor, amount, signatures, stamps, anything that looks off. (For the live API, attach the file via the SDK; this demo accepts text.)"
-          className="input resize-none"
-        />
+
+        {/* Drag-and-drop */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDrag(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f) pickFile(f);
+          }}
+          className={`relative grid place-items-center rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+            drag ? "border-accent-gold bg-accent-gold/5" : "border-line bg-bg-elev/40"
+          }`}
+        >
+          {image ? (
+            <div className="w-full">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[12px] text-ink">
+                  <ImageIcon className="h-4 w-4 text-accent-gold" />
+                  <span className="truncate">{imageName}</span>
+                </div>
+                <button
+                  onClick={() => { setImage(null); setImageName(null); }}
+                  className="grid h-6 w-6 place-items-center rounded-md text-ink-muted hover:bg-bg-subtle"
+                  aria-label="Remove image"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <img src={image} alt="" className="mx-auto max-h-60 rounded-md border border-line object-contain" />
+            </div>
+          ) : (
+            <>
+              <Upload className="h-6 w-6 text-ink-muted" />
+              <div className="mt-2 text-[13px] text-ink">Drop a document image here</div>
+              <div className="text-[11px] text-ink-muted">JPG / PNG / WebP up to 6MB · or click to browse</div>
+              <button onClick={() => fileRef.current?.click()} className="btn btn-ghost mt-3">
+                <ImageIcon className="h-4 w-4" /> Choose image
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f); }}
+              />
+            </>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-1 text-[11px] uppercase tracking-[0.12em] text-ink-muted">
+            Description / context (optional, helps the engine)
+          </div>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={4}
+            placeholder="Vendor, amount, signatures, stamps, anything that looks off."
+            className="input resize-none"
+          />
+        </div>
+
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-[12px] text-ink-muted">
-            <Upload className="h-3.5 w-3.5" /> File upload available in production
+          <div className="flex items-center gap-2 text-[11px] text-ink-muted">
+            <Sparkles className="h-3.5 w-3.5 text-accent-gold" />
+            With <code className="rounded bg-bg-elev px-1.5 py-0.5">ANTHROPIC_API_KEY</code>, images use Claude vision for real forensic analysis.
           </div>
           <button
             onClick={submit}
-            disabled={loading || !text.trim()}
+            disabled={loading || (!text.trim() && !image)}
             className="btn btn-primary disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
@@ -131,11 +222,8 @@ export function VerifyClient() {
               className="grid h-11 w-11 place-items-center rounded-xl"
               style={{
                 background:
-                  result.verdict === "verified"
-                    ? "rgba(16,185,129,0.15)"
-                    : "rgba(239,68,68,0.15)",
-                color:
-                  result.verdict === "verified" ? "#10b981" : result.verdict === "flagged" ? "#f59e0b" : "#ef4444",
+                  result.verdict === "verified" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
+                color: result.verdict === "verified" ? "#10b981" : result.verdict === "flagged" ? "#f59e0b" : "#ef4444",
               }}
             >
               {result.verdict === "verified" ? <ShieldCheck className="h-5 w-5" /> : <ShieldAlert className="h-5 w-5" />}
@@ -163,6 +251,20 @@ export function VerifyClient() {
               <div className="mb-1 text-[11px] uppercase tracking-[0.12em] text-ink-muted">Summary</div>
               <p className="text-[14px] text-ink">{result.summary}</p>
             </div>
+
+            {result.extractedFields && (
+              <div>
+                <div className="mb-2 text-[11px] uppercase tracking-[0.12em] text-ink-muted">Extracted fields</div>
+                <div className="grid gap-2 md:grid-cols-3">
+                  {Object.entries(result.extractedFields).map(([k, v]) => (
+                    <div key={k} className="rounded-md border border-line bg-bg-elev/40 p-2.5">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-ink-muted">{k}</div>
+                      <div className="mt-0.5 text-[13px] text-ink">{String(v) || "—"}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {result.flags.length > 0 && (
               <div>

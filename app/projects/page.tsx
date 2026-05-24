@@ -2,7 +2,8 @@ import Link from "next/link";
 import { PROJECTS } from "@/lib/mock-data";
 import { SectorBadge } from "@/components/sector-icon";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
-import { ArrowUpRight, AlertTriangle, MapPin, User } from "lucide-react";
+import { Sparkline } from "@/components/sparkline";
+import { ArrowUpRight, AlertTriangle, MapPin, User, Plus } from "lucide-react";
 
 export default function ProjectsPage() {
   return (
@@ -15,6 +16,7 @@ export default function ProjectsPage() {
             Every venture you fund from abroad, continuously verified.
           </p>
         </div>
+        <Link href="/new-project" className="btn btn-primary"><Plus className="h-4 w-4" /> New project</Link>
       </div>
 
       <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -54,10 +56,20 @@ export default function ProjectsPage() {
                   <div className="font-semibold text-ink">{p.progress}%</div>
                 </div>
                 <div className="col-span-2">
-                  <div className="flex items-center gap-1 text-ink-muted">
-                    <User className="h-3 w-3" /> Managed by
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-1 text-ink-muted">
+                      <User className="h-3 w-3" /> {p.managedBy} <span className="opacity-70">({p.managedByRelation})</span>
+                    </span>
+                    <span className="text-ink-muted">Trust history</span>
                   </div>
-                  <div className="text-ink">{p.managedBy} <span className="text-ink-muted">({p.managedByRelation})</span></div>
+                  <div className="mt-1">
+                    <Sparkline
+                      data={p.trustHistory.slice(-30)}
+                      width={260}
+                      height={28}
+                      color={p.risk === "high" ? "#ef4444" : p.risk === "med" ? "#f59e0b" : "#10b981"}
+                    />
+                  </div>
                 </div>
               </div>
 

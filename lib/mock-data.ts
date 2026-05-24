@@ -6,8 +6,27 @@ import type {
   Milestone,
   Alert,
   Trustee,
+  ForensicCase,
+  FraudPattern,
+  Benchmark,
+  Notification,
+  Region,
 } from "./types";
 import { chainHash, fakeSig, shortHash } from "./hash";
+
+const baseDate = new Date("2026-05-20T09:00:00Z").getTime();
+const minus = (days: number, hours = 0) =>
+  new Date(baseDate - days * 86400000 - hours * 3600000).toISOString();
+
+function genSeries(days: number, start: number, vol: number, drift = 0): { d: string; v: number }[] {
+  const out: { d: string; v: number }[] = [];
+  let v = start;
+  for (let i = days; i >= 0; i--) {
+    v = Math.max(0, Math.min(100, v + (Math.sin(i / 3) * vol) / 2 + drift + (i % 5 === 0 ? -vol / 3 : vol / 6)));
+    out.push({ d: minus(i).slice(0, 10), v: Math.round(v) });
+  }
+  return out;
+}
 
 export const PROJECTS: Project[] = [
   {
@@ -15,7 +34,9 @@ export const PROJECTS: Project[] = [
     name: "4-Bedroom Family Home, Kasoa",
     sector: "construction",
     location: "Kasoa, Akweley Hills",
-    region: "Central Region",
+    region: "Central",
+    lat: 5.5421,
+    lng: -0.4156,
     diasporaOwner: "Akosua Mensah",
     ownerLocation: "Toronto, Canada",
     managedBy: "Kwame Mensah",
@@ -35,6 +56,8 @@ export const PROJECTS: Project[] = [
     thumbnail: "construction",
     summary:
       "Two-storey family home. Two flags on Q3: cement receipt forensics show font inconsistencies, and a site photo's GPS reads 1.2 km off the parcel.",
+    trustHistory: genSeries(60, 92, 5, -0.4),
+    riskHistory: genSeries(60, 22, 6, 0.6),
   },
   {
     id: "east-legon-plot",
@@ -42,6 +65,8 @@ export const PROJECTS: Project[] = [
     sector: "real-estate",
     location: "East Legon Hills, Adjiringanor",
     region: "Greater Accra",
+    lat: 5.6512,
+    lng: -0.1421,
     diasporaOwner: "Nana Yaw Boateng",
     ownerLocation: "London, UK",
     managedBy: "Ofori Legal Chambers",
@@ -61,6 +86,8 @@ export const PROJECTS: Project[] = [
     thumbnail: "land",
     summary:
       "Title cross-check against Lands Commission registry returned two competing claims on a 0.8-acre overlap. Investigation in progress.",
+    trustHistory: genSeries(120, 82, 6, -0.3),
+    riskHistory: genSeries(120, 14, 8, 0.7),
   },
   {
     id: "tema-civic",
@@ -68,6 +95,8 @@ export const PROJECTS: Project[] = [
     sector: "vehicle-import",
     location: "Tema Port",
     region: "Greater Accra",
+    lat: 5.671,
+    lng: 0.012,
     diasporaOwner: "Yaa Asantewaa",
     ownerLocation: "New York, USA",
     managedBy: "Ato Clearing Services",
@@ -87,6 +116,8 @@ export const PROJECTS: Project[] = [
     thumbnail: "vehicle",
     summary:
       "Bill of lading, VIN, and GRA duty receipts cross-match. One duty receipt pending blockchain anchor. Vehicle cleared and in transit to inland depot.",
+    trustHistory: genSeries(40, 70, 4, 0.5),
+    riskHistory: genSeries(40, 45, 3, -0.6),
   },
   {
     id: "kumasi-shop",
@@ -94,6 +125,8 @@ export const PROJECTS: Project[] = [
     sector: "business",
     location: "Adum, Kumasi",
     region: "Ashanti",
+    lat: 6.6884,
+    lng: -1.6244,
     diasporaOwner: "Esi Forson",
     ownerLocation: "Hamburg, Germany",
     managedBy: "Auntie Grace Forson",
@@ -113,6 +146,8 @@ export const PROJECTS: Project[] = [
     thumbnail: "business",
     summary:
       "Shop fitting underway. Suspicious GHS 12,400 'rent top-up' lacks landlord receipt; AI flagged a duplicate transaction signature from October's batch.",
+    trustHistory: genSeries(80, 90, 5, -0.2),
+    riskHistory: genSeries(80, 18, 5, 0.4),
   },
   {
     id: "korle-bu-care",
@@ -120,6 +155,8 @@ export const PROJECTS: Project[] = [
     sector: "medical",
     location: "Korle Bu Teaching Hospital, Accra",
     region: "Greater Accra",
+    lat: 5.5358,
+    lng: -0.2295,
     diasporaOwner: "Kojo Asare",
     ownerLocation: "Sydney, Australia",
     managedBy: "Auntie Adwoa",
@@ -139,6 +176,8 @@ export const PROJECTS: Project[] = [
     thumbnail: "medical",
     summary:
       "All hospital receipts cross-verified against Korle Bu billing portal. Recovery on schedule. Trustee nurse confirms presence on ward rounds.",
+    trustHistory: genSeries(30, 80, 4, 0.4),
+    riskHistory: genSeries(30, 35, 3, -0.5),
   },
   {
     id: "ho-poultry",
@@ -146,6 +185,8 @@ export const PROJECTS: Project[] = [
     sector: "agriculture",
     location: "Ho, Volta Region",
     region: "Volta",
+    lat: 6.612,
+    lng: 0.471,
     diasporaOwner: "Mawuli Agbeko",
     ownerLocation: "Atlanta, USA",
     managedBy: "Cousin Senanu",
@@ -165,15 +206,72 @@ export const PROJECTS: Project[] = [
     thumbnail: "agri",
     summary:
       "Coop construction at 80%. Feed supplier verified. Drone imagery from Trustee A. Yawson confirms structure footprint matches plan.",
+    trustHistory: genSeries(50, 78, 4, 0.2),
+    riskHistory: genSeries(50, 30, 3, -0.1),
+  },
+  {
+    id: "takoradi-funeral",
+    name: "Late Aunt Akua's Funeral Rites",
+    sector: "funeral",
+    location: "Takoradi, Western Region",
+    region: "Western",
+    lat: 4.8845,
+    lng: -1.7554,
+    diasporaOwner: "Kwesi Nkrumah",
+    ownerLocation: "Bristol, UK",
+    managedBy: "Cousin Esinam",
+    managedByRelation: "Cousin",
+    budgetGHS: 48000,
+    spentGHS: 28000,
+    startDate: "2026-04-10",
+    targetCompletion: "2026-06-05",
+    progress: 60,
+    risk: "med",
+    riskScore: 55,
+    status: "alert",
+    trustScore: 70,
+    verifiedMilestones: 2,
+    totalMilestones: 4,
+    alerts: 1,
+    thumbnail: "funeral",
+    summary:
+      "Canopy and PA system invoices are 38% above benchmark. Vendor MoMo IDs cannot be confirmed. Recommended trustee attendance at the planning meeting.",
+    trustHistory: genSeries(40, 86, 5, -0.3),
+    riskHistory: genSeries(40, 20, 4, 0.5),
+  },
+  {
+    id: "tamale-school",
+    name: "Daughter's SHS Boarding Fees + Books",
+    sector: "education",
+    location: "Tamale Secondary School",
+    region: "Northern",
+    lat: 9.4008,
+    lng: -0.8393,
+    diasporaOwner: "Hawa Mahama",
+    ownerLocation: "Manchester, UK",
+    managedBy: "Bro. Yakubu",
+    managedByRelation: "Uncle",
+    budgetGHS: 14500,
+    spentGHS: 9200,
+    startDate: "2026-01-15",
+    targetCompletion: "2026-07-30",
+    progress: 64,
+    risk: "low",
+    riskScore: 15,
+    status: "active",
+    trustScore: 95,
+    verifiedMilestones: 3,
+    totalMilestones: 4,
+    alerts: 0,
+    thumbnail: "education",
+    summary:
+      "School fees verified against GES portal. Books invoice within benchmark. Attendance attested by school bursar.",
+    trustHistory: genSeries(30, 80, 3, 0.5),
+    riskHistory: genSeries(30, 25, 3, -0.3),
   },
 ];
 
-const baseDate = new Date("2026-05-20T09:00:00Z").getTime();
-const minus = (days: number, hours = 0) =>
-  new Date(baseDate - days * 86400000 - hours * 3600000).toISOString();
-
 export const DOCUMENTS: Document[] = [
-  // Kasoa
   {
     id: "doc-1",
     projectId: "kasoa-4bed",
@@ -182,7 +280,11 @@ export const DOCUMENTS: Document[] = [
     uploadedAt: minus(3),
     uploadedBy: "Kwame Mensah",
     authenticityScore: 41,
-    flags: ["Inconsistent font (Helvetica → Arial mid-document)", "Pixel-level edits in total field", "Vendor stamp mismatch vs prior 6 receipts"],
+    flags: [
+      "Inconsistent font (Helvetica → Arial mid-document)",
+      "Pixel-level edits in total field",
+      "Vendor stamp mismatch vs prior 6 receipts",
+    ],
     status: "flagged",
     amountGHS: 14400,
     vendor: "Diamond Cement Ghana",
@@ -263,7 +365,6 @@ export const DOCUMENTS: Document[] = [
     },
     hash: shortHash("doc-4"),
   },
-  // East Legon
   {
     id: "doc-5",
     projectId: "east-legon-plot",
@@ -309,7 +410,6 @@ export const DOCUMENTS: Document[] = [
     },
     hash: shortHash("doc-6"),
   },
-  // Vehicle
   {
     id: "doc-7",
     projectId: "tema-civic",
@@ -355,7 +455,6 @@ export const DOCUMENTS: Document[] = [
     },
     hash: shortHash("doc-8"),
   },
-  // Business
   {
     id: "doc-9",
     projectId: "kumasi-shop",
@@ -404,7 +503,6 @@ export const DOCUMENTS: Document[] = [
     },
     hash: shortHash("doc-10"),
   },
-  // Medical
   {
     id: "doc-11",
     projectId: "korle-bu-care",
@@ -427,6 +525,31 @@ export const DOCUMENTS: Document[] = [
       crossRefMatched: true,
     },
     hash: shortHash("doc-11"),
+  },
+  {
+    id: "doc-12",
+    projectId: "takoradi-funeral",
+    name: "Canopy & PA System Quote",
+    type: "invoice",
+    uploadedAt: minus(6),
+    uploadedBy: "Cousin Esinam",
+    authenticityScore: 58,
+    flags: [
+      "Quoted GHS 8,400 — 38% above regional benchmark (GHS 6,080 median)",
+      "Vendor MoMo merchant ID does not resolve",
+    ],
+    status: "flagged",
+    amountGHS: 8400,
+    forensics: {
+      metadataIntact: false,
+      fontConsistency: 78,
+      compressionAnomalies: 2,
+      aiGeneratedProbability: 8,
+      pixelTampering: 18,
+      chainOfCustody: 55,
+      crossRefMatched: false,
+    },
+    hash: shortHash("doc-12"),
   },
 ];
 
@@ -613,9 +736,17 @@ export const ALERTS: Alert[] = [
     ts: minus(5),
     category: "doc",
   },
+  {
+    id: "al-7",
+    projectId: "takoradi-funeral",
+    severity: "warning",
+    title: "Canopy quote 38% above benchmark",
+    detail: "Quoted GHS 8,400 vs regional median GHS 6,080.",
+    ts: minus(6),
+    category: "doc",
+  },
 ];
 
-// Build a hash-chained audit ledger
 function buildLedger(): AuditEvent[] {
   const seed: Array<Omit<AuditEvent, "prevHash" | "hash" | "sig">> = [
     { id: "ev-1", projectId: "kasoa-4bed", ts: minus(140), actor: "Akosua Mensah", action: "Project created — '4-Bedroom Family Home, Kasoa'", category: "system" },
@@ -660,6 +791,8 @@ export const TRUSTEES: Trustee[] = [
     feeRange: "GHS 800 — 2,500 / visit",
     avatar: "KO",
     bio: "Independent QS with 14 years auditing diaspora-funded construction. Drone-certified.",
+    responseHours: 18,
+    availableNow: true,
   },
   {
     id: "tr-2",
@@ -675,6 +808,8 @@ export const TRUSTEES: Trustee[] = [
     feeRange: "GHS 1,200 — 4,000 / parcel",
     avatar: "AY",
     bio: "Specialist in title-overlap forensics. Authored 9 court-admitted survey reports.",
+    responseHours: 12,
+    availableNow: true,
   },
   {
     id: "tr-3",
@@ -690,6 +825,8 @@ export const TRUSTEES: Trustee[] = [
     feeRange: "GHS 1,500 — 6,000 / matter",
     avatar: "EO",
     bio: "Conveyancing counsel with deep Lands Commission access.",
+    responseHours: 24,
+    availableNow: false,
   },
   {
     id: "tr-4",
@@ -705,6 +842,8 @@ export const TRUSTEES: Trustee[] = [
     feeRange: "GHS 400 — 1,200 / visit",
     avatar: "NA",
     bio: "Family medicine physician offering diaspora medical oversight.",
+    responseHours: 6,
+    availableNow: true,
   },
   {
     id: "tr-5",
@@ -720,6 +859,8 @@ export const TRUSTEES: Trustee[] = [
     feeRange: "GHS 600 — 3,500 / shipment",
     avatar: "AB",
     bio: "16 years clearing diaspora vehicle imports. GRA-licensed agent #CG-2148.",
+    responseHours: 8,
+    availableNow: true,
   },
   {
     id: "tr-6",
@@ -735,7 +876,285 @@ export const TRUSTEES: Trustee[] = [
     feeRange: "GHS 500 — 1,800 / visit",
     avatar: "FA",
     bio: "MoFA-trained extension officer with drone surveying skills.",
+    responseHours: 16,
+    availableNow: true,
   },
+];
+
+export const FORENSIC_CASES: ForensicCase[] = [
+  {
+    id: "case-1",
+    projectId: "east-legon-plot",
+    title: "East Legon Hills — Title Overlap & Encroachment",
+    status: "investigating",
+    severity: "critical",
+    openedAt: minus(11),
+    lastUpdated: minus(2),
+    lead: "Esi Ofori, Esq.",
+    summary:
+      "Lands Commission cross-check returned a competing claim from 2019 on the eastern 0.8-acre portion. Trustee A. Yawson confirmed third-party foundation works 14m inside the boundary. Stool elder signature on indenture diverges from reference set.",
+    hypothesis:
+      "The seller (stool elder Nii Agyemang) allegedly executed two indentures over overlapping parcels with two different buyers (2019 & 2025). Signatures on the 2025 indenture show 22% variance against 2019/2021 reference samples — possible third-party signature.",
+    evidenceItemIds: ["doc-5", "doc-6", "ph-4", "al-3", "al-4", "al-5"],
+    timeline: [
+      { ts: minus(58), actor: "Ofori Legal Chambers", note: "Indenture uploaded" },
+      { ts: minus(11), actor: "GhanaWatch AI", note: "Lands Commission cross-check returned competing claim (Case LC/GA/2019/0418)" },
+      { ts: minus(8), actor: "Esi Ofori, Esq.", note: "Case opened — investigation phase initiated" },
+      { ts: minus(4), actor: "Trustee A. Yawson", note: "On-site survey: encroachment confirmed at eastern boundary, photographed at 8 angles" },
+      { ts: minus(3), actor: "Esi Ofori, Esq.", note: "Reference signature samples obtained from Lands Commission archive" },
+      { ts: minus(2), actor: "GhanaWatch AI", note: "Signature ML comparison: 22% variance vs reference, above 18% threshold" },
+    ],
+    recommendedActions: [
+      "File a caveat at the Lands Commission immediately (Form LC-7) to block any further dealings",
+      "Issue a cease-and-desist to the encroaching developer",
+      "Compile sealed evidence pack and forward to the Ghana Police Service Land Fraud Unit",
+      "Open a parallel claim against the seller for breach + fraud (limitation under Limitation Act 1972, Act 54)",
+      "Request judicial restraining order against further encroachment works",
+    ],
+    potentialLossGHS: 1250000,
+  },
+  {
+    id: "case-2",
+    projectId: "kasoa-4bed",
+    title: "Kasoa — Receipt forensics + off-site photo cluster",
+    status: "evidence-gathering",
+    severity: "high",
+    openedAt: minus(8),
+    lastUpdated: minus(1),
+    lead: "Kojo Owusu, MGhIS",
+    summary:
+      "Two flags in 8 days: (1) cement receipt with 41% authenticity (font + pixel tampering) and (2) a site photo with GPS 1.18 km off the registered parcel. Pattern suggests potential diversion of milestone funds.",
+    hypothesis:
+      "Manager (Kwame Mensah) may be inflating material receipts and submitting photos from a different site. Pattern matches the 'phantom progress' fraud profile common in Greater Accra / Central Region.",
+    evidenceItemIds: ["doc-1", "ph-1", "al-1", "al-2"],
+    timeline: [
+      { ts: minus(8), actor: "GhanaWatch AI", note: "Cement receipt flagged: font inconsistency + pixel tampering (authenticity 41%)" },
+      { ts: minus(5), actor: "Akosua Mensah", note: "Forensic case opened" },
+      { ts: minus(4), actor: "GhanaWatch AI", note: "Vendor pattern cross-check: Diamond Cement issuing format mismatches prior 6 receipts" },
+      { ts: minus(2), actor: "GhanaWatch AI", note: "Off-site photo flagged: GPS 1.18 km from parcel; scene mismatch 38%" },
+      { ts: minus(1), actor: "Kojo Owusu, MGhIS", note: "Trustee dispatch scheduled for 2026-05-25; unannounced visit confirmed" },
+    ],
+    recommendedActions: [
+      "Pause next milestone disbursement (Milestone 5: GHS 118,000)",
+      "Trustee unannounced site visit — confirm presence of stage-5 work and material",
+      "Request originals of all receipts in past 60 days for forensic review",
+      "Phone-confirm vendor (Diamond Cement Ghana) — verify the GHS 14,400 invoice on their records",
+    ],
+    potentialLossGHS: 95000,
+  },
+];
+
+export const FRAUD_PATTERNS: FraudPattern[] = [
+  {
+    id: "fp-double-sale",
+    name: "Multi-buyer land double-sale",
+    sector: "real-estate",
+    region: "Greater Accra · Eastern · Central",
+    prevalence: "endemic",
+    signals: [
+      "Seller pressing for quick payment, refusing to wait for Lands Commission cross-check",
+      "Stool / family land with one signature only",
+      "No site plan from a licensed surveyor",
+      "Indenture cites a parcel reference that doesn't appear in LC's recent index",
+      "Seller offers to keep the original indenture 'safe' until full payment clears",
+    ],
+    countermeasures: [
+      "Lands Commission online search before any payment",
+      "Independent licensed surveyor for boundary verification",
+      "Conveyancing lawyer to vet the indenture & POAs",
+      "Caveat filing if any suspicion arises",
+      "Escrow with payment release contingent on registration",
+    ],
+    caseExamples: [
+      "Dora Boateng v Mackeown Investments — single 20-acre plot found to also be part of a 50-acre sale to a developer",
+      "Ghana Supreme Court cases of single plots sold to as many as 13 buyers",
+    ],
+    refUrl: "https://africanlii.org/article/20200326/chaotic-land-ownership-records-shock-ghanas-supreme-court",
+  },
+  {
+    id: "fp-ghost-build",
+    name: "Ghost construction / phantom progress",
+    sector: "construction",
+    region: "All regions — most common in peri-urban Accra & Kumasi",
+    prevalence: "endemic",
+    signals: [
+      "Receipts arriving as phone photos / WhatsApp screenshots",
+      "Progress photos taken at the same angle, edited timestamps",
+      "Photos with stripped EXIF or GPS far from the parcel",
+      "Material quantities inconsistent with the BOQ stage",
+      "Funds requested 'in bulk' instead of milestone-tied",
+    ],
+    countermeasures: [
+      "BOQ-anchored milestone escrow",
+      "Geo-stamped photos through the GhanaWatch app only",
+      "Trustee QS visit at each milestone boundary",
+      "Drone overhead audit for sites > 0.5 acre",
+      "Random unannounced trustee visits",
+    ],
+    caseExamples: [
+      "Toronto diaspora family — £42,000 sent for Kasoa home; 14 months later, only foundation laid",
+      "London diaspora — GHS 380,000 sent for 'twin-house build' in Adenta; receipts photographed against fabric backdrop",
+    ],
+  },
+  {
+    id: "fp-fake-poa",
+    name: "Fake / unnotarised power of attorney",
+    sector: "real-estate",
+    region: "Greater Accra & Ashanti",
+    prevalence: "common",
+    signals: [
+      "POA presented as a printed letter without notarial seal",
+      "Holder cannot produce an apostille (for diaspora-issued POAs)",
+      "Stamp visible but issuer/notary not on the register",
+      "Holder pushes for cash settlement",
+    ],
+    countermeasures: [
+      "Cross-check notary on the General Legal Council registry",
+      "Require apostille for any POA issued abroad",
+      "Direct call to the principal (overseas) via verified number",
+      "Refuse any cash settlement above GHS 5,000",
+    ],
+    caseExamples: [
+      "USA-based diaspora — GHS 220,000 paid for plot via 'cousin' holding a typed POA; principal had never signed",
+    ],
+  },
+  {
+    id: "fp-duty-uplift",
+    name: "Tema port last-minute duty uplift",
+    sector: "vehicle-import",
+    region: "Tema · Takoradi",
+    prevalence: "common",
+    signals: [
+      "Clearing agent adds GHS 5,000+ 'penalty' after vehicle has landed",
+      "Penalty receipt not on GRA letterhead / no QR / no serial",
+      "Pressure to pay outside GRA portal",
+      "Different duty figure than the GRA HS-code calculator",
+    ],
+    countermeasures: [
+      "Run the GRA HS duty calculator independently before shipment",
+      "Demand serialised GRA receipts with QR codes for every line item",
+      "Verify clearing agent on GRA Customs Division registry",
+      "Refuse payment outside GhanaWatch escrow",
+    ],
+    caseExamples: [
+      "Sydney diaspora — GHS 18,000 'penalty' demanded on Tema-cleared Civic; refunded after GhanaWatch challenge",
+    ],
+  },
+  {
+    id: "fp-duplicate-receipt",
+    name: "Duplicate-signature receipt fraud",
+    sector: "business",
+    region: "All regions",
+    prevalence: "common",
+    signals: [
+      "Two receipts with >90% signature pixel-hash match",
+      "Receipts on plain paper without vendor letterhead",
+      "Same vendor name with inconsistent stamp",
+      "Round-number 'top-up' amounts each month",
+    ],
+    countermeasures: [
+      "Document forensics: duplicate-hash detection at upload",
+      "Vendor letterhead requirement",
+      "MoMo merchant ID verification",
+      "Direct payment to vendor via traceable channel",
+    ],
+    caseExamples: [
+      "Hamburg diaspora — GHS 36,000 in 'rent top-ups' over 7 months; signatures matched 94%; landlord never received funds",
+    ],
+  },
+  {
+    id: "fp-funeral-inflation",
+    name: "Funeral cost inflation cluster",
+    sector: "funeral",
+    region: "All regions — most acute in Western, Ashanti, Central",
+    prevalence: "endemic",
+    signals: [
+      "Canopy / PA / catering quotes 30%+ above regional benchmark",
+      "Vendor MoMo IDs that do not resolve",
+      "'Family levy' with no contributor ledger",
+      "Mortuary bills above the published fee schedule",
+      "Cash demanded for hearse / drumming, no receipts",
+    ],
+    countermeasures: [
+      "Vendor benchmarking against GhanaWatch's regional database",
+      "MoMo merchant ID resolution check",
+      "Contributor ledger required",
+      "Trustee attends planning meeting + reconciles spend",
+    ],
+    caseExamples: [
+      "Bristol diaspora — funeral budget escalated from GHS 24,000 to GHS 71,000 over 6 weeks with no itemised tally",
+    ],
+  },
+  {
+    id: "fp-hospital-ransom",
+    name: "Hospital body-release ransom",
+    sector: "medical",
+    region: "Greater Accra · Ashanti",
+    prevalence: "common",
+    signals: [
+      "Pressure to pay outside the official hospital cashier",
+      "Round-number bills with no itemisation",
+      "Additional 'release fees' that aren't on the receipt",
+      "Drugs sourced from outside the hospital pharmacy at inflated prices",
+    ],
+    countermeasures: [
+      "Direct cashier settlement",
+      "Itemised bill requirement",
+      "Trustee ward visit + receipt validation",
+      "Hospital portal cross-check",
+    ],
+    caseExamples: [
+      "Sydney diaspora — body of late grandfather held at Korle Bu mortuary pending GHS 4,500 'release fee' — not on the receipt",
+    ],
+  },
+  {
+    id: "fp-school-fake",
+    name: "School fees forgery / ghost enrolment",
+    sector: "education",
+    region: "All regions",
+    prevalence: "common",
+    signals: [
+      "Receipts that don't match the school's portal records",
+      "'Extra classes' invoiced without school authorisation",
+      "Books / uniforms quoted at retail when school has a bulk-discount supplier",
+      "Term receipts without serial number",
+    ],
+    countermeasures: [
+      "School portal cross-check (GES & private databases)",
+      "Trustee attendance attestation",
+      "Direct settlement to school account where supported",
+      "Bulk-supplier price benchmarking",
+    ],
+    caseExamples: [
+      "Manchester diaspora — GHS 24,000 in 'fees' over 18 months for child no longer enrolled",
+    ],
+  },
+];
+
+export const BENCHMARKS: Benchmark[] = [
+  { id: "bm-1", category: "material", item: "Cement (Diamond, 50kg)", unit: "bag", region: "Greater Accra", medianGHS: 105, p10: 95, p90: 118, updated: minus(2).slice(0,10) },
+  { id: "bm-2", category: "material", item: "Iron Rod 12mm", unit: "rod (12m)", region: "Greater Accra", medianGHS: 165, p10: 150, p90: 185, updated: minus(2).slice(0,10) },
+  { id: "bm-3", category: "material", item: "Aluminium Roofing Sheet", unit: "sqm", region: "All regions", medianGHS: 95, p10: 82, p90: 108, updated: minus(3).slice(0,10) },
+  { id: "bm-4", category: "labor", item: "Mason Day Rate", unit: "day", region: "Greater Accra", medianGHS: 220, p10: 180, p90: 280, updated: minus(7).slice(0,10) },
+  { id: "bm-5", category: "labor", item: "Carpenter Day Rate", unit: "day", region: "Ashanti", medianGHS: 200, p10: 170, p90: 250, updated: minus(7).slice(0,10) },
+  { id: "bm-6", category: "import-duty", item: "Honda Civic 2018-2020 Duty", unit: "vehicle", region: "Tema", medianGHS: 36800, p10: 33000, p90: 41500, updated: minus(2).slice(0,10) },
+  { id: "bm-7", category: "funeral", item: "Canopy + 200 chairs (1 day)", unit: "rental", region: "Western", medianGHS: 6080, p10: 4800, p90: 7800, updated: minus(5).slice(0,10) },
+  { id: "bm-8", category: "funeral", item: "Casket (mid-range)", unit: "unit", region: "All regions", medianGHS: 5400, p10: 3800, p90: 9500, updated: minus(10).slice(0,10) },
+  { id: "bm-9", category: "medical", item: "Korle Bu — Day-case surgery", unit: "case", region: "Greater Accra", medianGHS: 8500, p10: 5200, p90: 14000, updated: minus(14).slice(0,10) },
+  { id: "bm-10", category: "education", item: "SHS boarding (term)", unit: "term", region: "Northern", medianGHS: 2400, p10: 2100, p90: 2900, updated: minus(21).slice(0,10) },
+];
+
+export const NOTIFICATIONS: Notification[] = [
+  { id: "n-1", kind: "alert", severity: "critical", title: "Off-site photo on Kasoa build", body: "Today's photo is 1.18 km from the parcel. Trustee dispatch recommended.", ts: minus(2, 4), projectId: "kasoa-4bed", read: false },
+  { id: "n-2", kind: "alert", severity: "critical", title: "Encroachment confirmed — East Legon", body: "Trustee A. Yawson photographed third-party foundation 14m inside boundary.", ts: minus(4), projectId: "east-legon-plot", read: false },
+  { id: "n-3", kind: "verify", severity: "warning", title: "Document forensics: 41% authenticity", body: "Cement receipt (GHS 14,400) shows font inconsistency + pixel tampering.", ts: minus(3), projectId: "kasoa-4bed", read: false },
+  { id: "n-4", kind: "trustee", severity: "info", title: "Trustee accepted dispatch", body: "Kojo Owusu has accepted the Kasoa milestone-5 re-verification. ETA 2026-05-25.", ts: minus(1), projectId: "kasoa-4bed", read: true },
+  { id: "n-5", kind: "milestone", severity: "info", title: "Milestone released", body: "Ho poultry farm — Milestone 2 (GHS 14,000) released after Trustee F. Adeli's verification.", ts: minus(3), projectId: "ho-poultry", read: true },
+  { id: "n-6", kind: "doc", severity: "info", title: "Document verified", body: "Korle Bu pre-op bill (GHS 18,500) — 99% authenticity, cross-matched with hospital portal.", ts: minus(15), projectId: "korle-bu-care", read: true },
+  { id: "n-7", kind: "ledger", severity: "info", title: "Audit ledger anchored", body: "Daily audit hash committed: 0xae34f8…91d2c0", ts: minus(1), read: true },
+  { id: "n-8", kind: "alert", severity: "warning", title: "Funeral quote above benchmark", body: "Canopy + PA quote for Takoradi funeral 38% above regional median.", ts: minus(6), projectId: "takoradi-funeral", read: false },
+  { id: "n-9", kind: "verify", severity: "warning", title: "Duplicate receipt detected", body: "Kumasi shop rent top-up signature matches October batch at 94%.", ts: minus(5), projectId: "kumasi-shop", read: false },
+  { id: "n-10", kind: "system", severity: "info", title: "Weekly trust report ready", body: "Your portfolio trust score moved from 76 → 73 this week. Two projects worsened.", ts: minus(1), read: false },
 ];
 
 export const getProject = (id: string) => PROJECTS.find((p) => p.id === id);
@@ -745,8 +1164,9 @@ export const getMilestonesByProject = (id: string) => MILESTONES.filter((m) => m
 export const getAlertsByProject = (id: string) => ALERTS.filter((a) => a.projectId === id);
 export const getAuditByProject = (id: string) =>
   AUDIT_EVENTS.filter((e) => e.projectId === id).sort((a, b) => (a.ts < b.ts ? 1 : -1));
+export const getCase = (id: string) => FORENSIC_CASES.find((c) => c.id === id);
+export const getCasesByProject = (id: string) => FORENSIC_CASES.filter((c) => c.projectId === id);
 
-// Platform-wide stats
 export const PLATFORM_STATS = {
   remittancesTracked2025GHS: 18_400_000,
   fraudPrevented2025GHS: 2_180_000,
@@ -758,3 +1178,36 @@ export const PLATFORM_STATS = {
   forensicCasesOpen: 38,
   countriesServed: 47,
 };
+
+// Regional risk heatmap data
+export const REGION_RISK: Record<string, { riskScore: number; activeProjects: number; openCases: number }> = {
+  "Greater Accra": { riskScore: 68, activeProjects: 612, openCases: 19 },
+  "Ashanti": { riskScore: 54, activeProjects: 311, openCases: 9 },
+  "Central": { riskScore: 49, activeProjects: 178, openCases: 4 },
+  "Western": { riskScore: 41, activeProjects: 102, openCases: 2 },
+  "Eastern": { riskScore: 43, activeProjects: 88, openCases: 3 },
+  "Volta": { riskScore: 28, activeProjects: 74, openCases: 1 },
+  "Northern": { riskScore: 22, activeProjects: 56, openCases: 0 },
+  "Bono": { riskScore: 30, activeProjects: 41, openCases: 0 },
+  "Upper East": { riskScore: 19, activeProjects: 18, openCases: 0 },
+  "Upper West": { riskScore: 17, activeProjects: 7, openCases: 0 },
+  "Oti": { riskScore: 25, activeProjects: 12, openCases: 0 },
+  "Western North": { riskScore: 26, activeProjects: 14, openCases: 0 },
+  "Bono East": { riskScore: 29, activeProjects: 22, openCases: 0 },
+  "Ahafo": { riskScore: 24, activeProjects: 9, openCases: 0 },
+  "Savannah": { riskScore: 21, activeProjects: 11, openCases: 0 },
+  "North East": { riskScore: 20, activeProjects: 7, openCases: 0 },
+};
+
+// Portfolio-level time series
+export const PORTFOLIO_TRUST_HISTORY = genSeries(90, 65, 4, 0.15);
+export const PORTFOLIO_RISK_HISTORY = genSeries(90, 35, 4, -0.05);
+export const PORTFOLIO_SPEND_HISTORY = (() => {
+  const out: { d: string; v: number }[] = [];
+  let v = 1200000;
+  for (let i = 90; i >= 0; i--) {
+    v += 8000 + Math.abs(Math.sin(i / 4) * 12000) + (i % 7 === 0 ? 25000 : 0);
+    out.push({ d: minus(i).slice(0, 10), v: Math.round(v / 1000) });
+  }
+  return out;
+})();

@@ -3,6 +3,7 @@ import { getAnthropic } from "@/lib/ai";
 import { shortHash } from "@/lib/hash";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 type ForensicResult = {
   verdict: "verified" | "flagged" | "rejected";
@@ -17,13 +18,18 @@ type ForensicResult = {
     metadataIntact: boolean;
     vendorPatternMatch: boolean;
   };
+  extractedFields?: Record<string, string>;
   recommendation: string;
   hash: string;
 };
 
-const FORENSIC_SYSTEM = `You are GhanaWatch's forensic document analysis engine. You analyse descriptions of Ghanaian financial / legal documents and return a strict JSON verdict.
+const FORENSIC_SYSTEM = `You are GhanaWatch's forensic document analysis engine. You analyse Ghanaian financial / legal documents — either described in text or provided as an image — and return a strict JSON verdict.
 
-You think about: font consistency, pixel tampering, AI generation patterns, vendor stamp authenticity (GRA, Korle Bu, Lands Commission, KEEDA, KMA, KSE), Cedi (GHS) amount realism, signature variance, EXIF metadata, duplicate patterns. You also know that Ghanaian stool/family land sales require collective consent and notarised POAs.
+You think about: font / typography consistency, pixel-level tampering, AI generation patterns, vendor stamp authenticity (GRA, Korle Bu, Lands Commission, KEEDA, KMA, KSE, Diamond Cement, Aluworks), Cedi (GHS) amount realism, signature variance, EXIF / PDF metadata, duplicate patterns. You know Ghanaian stool/family land sales require collective consent and notarised POAs; you know KEEDA permits use specific letterheads; you know GRA Customs receipts have serial + QR; Korle Bu billing is itemised.
+
+When given an IMAGE, you visually inspect: typography uniformity, alignment, watermarks, stamps, signatures, paper texture/compression, suspicious crops/edits, alignment of fields, suspicious round numbers, and whether the document matches the stated type (e.g. a 'receipt' that looks like a screenshot from a chat rather than a vendor receipt should be flagged).
+
+You also extract any readable key fields (vendor, date, amount in GHS, reference number, signature presence).
 
 Return ONLY JSON of shape:
 {
@@ -39,6 +45,7 @@ Return ONLY JSON of shape:
     "metadataIntact": true|false,
     "vendorPatternMatch": true|false
   },
+  "extractedFields": { "vendor": "...", "date": "...", "amountGHS": "...", "ref": "...", "signature": "present|absent" },
   "recommendation": "<one action the diaspora user should take next>"
 }`;
 
@@ -46,20 +53,37 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const text: string = (body.text ?? "").toString().slice(0, 4000);
   const type: string = (body.type ?? "receipt").toString();
-  if (!text.trim()) return NextResponse.json({ error: "Empty text" }, { status: 400 });
+  const image: string | undefined = body.image; // data URL like "data:image/jpeg;base64,..."
 
-  const hash = shortHash(`${type}:${text}`);
+  if (!text.trim() && !image) {
+    return NextResponse.json({ error: "Provide text or image" }, { status: 400 });
+  }
+
+  const hash = shortHash(`${type}:${text}:${(image ?? "").slice(0, 64)}`);
   const anthropic = getAnthropic();
 
   if (anthropic) {
     try {
+      const content: any[] = [];
+      if (image) {
+        const match = image.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+        if (match) {
+          content.push({
+            type: "image",
+            source: { type: "base64", media_type: match[1], data: match[2] },
+          });
+        }
+      }
+      content.push({
+        type: "text",
+        text: `Document type claimed: ${type}\n\nDescription / context (if any):\n${text || "(none)"}\n\nReturn the JSON verdict only.`,
+      });
+
       const msg = await anthropic.messages.create({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
+        model: image ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001",
+        max_tokens: 1100,
         system: FORENSIC_SYSTEM,
-        messages: [
-          { role: "user", content: `Document type: ${type}\nDescription:\n${text}\n\nReturn the JSON verdict.` },
-        ],
+        messages: [{ role: "user", content }],
       });
       const txt =
         msg.content
@@ -71,11 +95,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ...normalise(parsed), hash });
       }
     } catch (e) {
-      // fall through to offline
+      // fall through
     }
   }
 
-  return NextResponse.json({ ...offlineVerdict(type, text), hash });
+  return NextResponse.json({ ...offlineVerdict(type, text, !!image), hash });
 }
 
 function parseFirstJson(s: string): any | null {
@@ -103,7 +127,7 @@ function normalise(p: any): ForensicResult {
     verdict,
     score,
     summary: String(p.summary ?? ""),
-    flags: Array.isArray(p.flags) ? p.flags.slice(0, 8).map(String) : [],
+    flags: Array.isArray(p.flags) ? p.flags.slice(0, 10).map(String) : [],
     forensics: {
       fontConsistency: clamp(p.forensics?.fontConsistency ?? 80, 0, 100),
       pixelTampering: clamp(p.forensics?.pixelTampering ?? 10, 0, 100),
@@ -112,6 +136,8 @@ function normalise(p: any): ForensicResult {
       metadataIntact: Boolean(p.forensics?.metadataIntact ?? true),
       vendorPatternMatch: Boolean(p.forensics?.vendorPatternMatch ?? true),
     },
+    extractedFields:
+      p.extractedFields && typeof p.extractedFields === "object" ? p.extractedFields : undefined,
     recommendation: String(p.recommendation ?? ""),
     hash: "",
   };
@@ -123,11 +149,15 @@ function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, Math.round(n)));
 }
 
-function offlineVerdict(type: string, text: string): ForensicResult {
+function offlineVerdict(type: string, text: string, hasImage: boolean): ForensicResult {
   const t = text.toLowerCase();
   const flags: string[] = [];
   let score = 88;
 
+  if (hasImage) {
+    score -= 4;
+    flags.push("Demo mode: image received but live Vision is disabled (set ANTHROPIC_API_KEY to enable real visual forensics).");
+  }
   if (t.includes("whatsapp") || t.includes("screenshot") || t.includes("photo from")) {
     score -= 18;
     flags.push("Document arrived as a phone photo / screenshot — original PDF unavailable. EXIF chain partial.");
@@ -153,7 +183,6 @@ function offlineVerdict(type: string, text: string): ForensicResult {
     flags.push("Cash payment — no traceable settlement; demand a MoMo or bank transfer to a verifiable account.");
   }
   if (t.includes("ghs") && /ghs\s*\d/.test(t)) {
-    // amount realism
     const num = Number((t.match(/ghs\s*([0-9,]+)/)?.[1] ?? "0").replace(/,/g, ""));
     if (num > 50000 && type === "receipt") {
       flags.push(`Large GHS ${num.toLocaleString()} cash receipt — push through escrow / direct vendor payment.`);
@@ -198,6 +227,9 @@ function offlineVerdict(type: string, text: string): ForensicResult {
       metadataIntact: verdict !== "rejected",
       vendorPatternMatch: verdict === "verified",
     },
+    extractedFields: hasImage
+      ? { vendor: "—", date: "—", amountGHS: "—", ref: "—", signature: "—" }
+      : undefined,
     recommendation,
     hash: "",
   };

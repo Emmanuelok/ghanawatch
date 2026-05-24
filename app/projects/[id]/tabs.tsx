@@ -1,20 +1,22 @@
 "use client";
 import { useState } from "react";
-import { FileSearch, Camera, Flag, ScrollText, Users } from "lucide-react";
+import { FileSearch, Camera, Flag, ScrollText, Users, ShieldAlert } from "lucide-react";
 
-type Tab = "docs" | "photos" | "milestones" | "ledger" | "trustee";
+type Tab = "docs" | "photos" | "milestones" | "ledger" | "cases" | "trustee";
 
 export function ProjectTabs({
   docsTab,
   photosTab,
   milestonesTab,
   ledgerTab,
+  casesTab,
   trusteeTab,
 }: {
   docsTab: React.ReactNode;
   photosTab: React.ReactNode;
   milestonesTab: React.ReactNode;
   ledgerTab: React.ReactNode;
+  casesTab: React.ReactNode;
   trusteeTab: React.ReactNode;
 }) {
   const [tab, setTab] = useState<Tab>("docs");
@@ -23,6 +25,7 @@ export function ProjectTabs({
     { id: "photos", label: "Site evidence", icon: Camera },
     { id: "milestones", label: "Milestones / escrow", icon: Flag },
     { id: "ledger", label: "Audit ledger", icon: ScrollText },
+    { id: "cases", label: "Forensic cases", icon: ShieldAlert },
     { id: "trustee", label: "Trustee", icon: Users },
   ];
 
@@ -53,6 +56,7 @@ export function ProjectTabs({
         {tab === "photos" && photosTab}
         {tab === "milestones" && milestonesTab}
         {tab === "ledger" && ledgerTab}
+        {tab === "cases" && casesTab}
         {tab === "trustee" && trusteeTab}
       </div>
     </div>

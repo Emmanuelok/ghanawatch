@@ -11,11 +11,23 @@ import {
   ArrowUpRight,
   ArrowRight,
   Clock,
+  Sparkles,
+  Plus,
+  Map as MapIcon,
 } from "lucide-react";
-import { PROJECTS, ALERTS, AUDIT_EVENTS, PLATFORM_STATS } from "@/lib/mock-data";
-import { SectorBadge } from "@/components/sector-icon";
+import {
+  PROJECTS,
+  ALERTS,
+  AUDIT_EVENTS,
+  PLATFORM_STATS,
+  PORTFOLIO_TRUST_HISTORY,
+  PORTFOLIO_RISK_HISTORY,
+  PORTFOLIO_SPEND_HISTORY,
+} from "@/lib/mock-data";
 import { ProjectThumbnail } from "@/components/project-thumbnail";
-import { TrustGauge } from "@/components/risk-dial";
+import { GhanaMap } from "@/components/ghana-map";
+import { Sparkline } from "@/components/sparkline";
+import { TimeSeries } from "@/components/timeseries";
 
 export default function Dashboard() {
   const totalBudget = PROJECTS.reduce((s, p) => s + p.budgetGHS, 0);
@@ -29,7 +41,6 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-10">
-      {/* HEADER */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-[12px] uppercase tracking-[0.14em] text-ink-muted">Diaspora dashboard</div>
@@ -38,13 +49,14 @@ export default function Dashboard() {
             Toronto, Canada · You are watching {PROJECTS.length} projects across {new Set(PROJECTS.map((p) => p.region)).size} regions
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/verify" className="btn btn-ghost"><FileSearch className="h-4 w-4" /> Verify a document</Link>
-          <Link href="/projects" className="btn btn-primary">All projects <ArrowRight className="h-4 w-4" /></Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/new-project" className="btn btn-ghost"><Plus className="h-4 w-4" /> New project</Link>
+          <Link href="/verify" className="btn btn-ghost"><FileSearch className="h-4 w-4" /> Verify a doc</Link>
+          <Link href="/investigator" className="btn btn-primary"><Sparkles className="h-4 w-4" /> AI Investigator</Link>
         </div>
       </div>
 
-      {/* TOP STATS */}
+      {/* TOP STATS with sparklines */}
       <div className="mt-8 grid gap-4 md:grid-cols-4">
         <StatCard
           icon={Banknote}
@@ -52,13 +64,15 @@ export default function Dashboard() {
           value={`GHS ${(totalBudget / 1e6).toFixed(2)}M`}
           sub={`${((totalSpent / totalBudget) * 100).toFixed(0)}% deployed`}
           accent="#f5b800"
+          spark={PORTFOLIO_SPEND_HISTORY}
         />
         <StatCard
           icon={ShieldCheck}
           label="Fraud prevented (you)"
-          value="GHS 412,000"
+          value="GHS 412K"
           sub="3 flagged transactions blocked"
           accent="#10b981"
+          spark={PORTFOLIO_TRUST_HISTORY}
         />
         <StatCard
           icon={AlertTriangle}
@@ -66,6 +80,7 @@ export default function Dashboard() {
           value={`${activeAlerts}`}
           sub={`${ALERTS.filter((a) => a.severity === "critical").length} critical · ${ALERTS.filter((a) => a.severity === "warning").length} warning`}
           accent="#ef4444"
+          spark={PORTFOLIO_RISK_HISTORY}
         />
         <StatCard
           icon={Activity}
@@ -73,14 +88,43 @@ export default function Dashboard() {
           value="217"
           sub="Hash chain intact ✓"
           accent="#3b82f6"
+          spark={PORTFOLIO_TRUST_HISTORY.slice(-30)}
         />
+      </div>
+
+      {/* HERO ROW: Trust/risk chart + Map */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="card p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <div className="text-[14px] font-semibold">Portfolio trust vs risk (90 days)</div>
+              <div className="text-[11px] text-ink-dim">Aggregate across all projects, daily snapshot</div>
+            </div>
+            <span className="chip"><TrendingUp className="h-3 w-3 text-accent-gold" /> Net up 4 pts</span>
+          </div>
+          <TimeSeries
+            height={200}
+            yMin={0}
+            yMax={100}
+            series={[
+              { name: "Trust", color: "#10b981", data: PORTFOLIO_TRUST_HISTORY },
+              { name: "Risk", color: "#ef4444", data: PORTFOLIO_RISK_HISTORY },
+            ]}
+          />
+        </div>
+
+        <div className="card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+            <div className="text-[14px] font-semibold">Map of investments</div>
+            <Link href="/map" className="text-[12px] text-ink-dim hover:text-ink"><MapIcon className="inline h-3 w-3" /> Open map</Link>
+          </div>
+          <GhanaMap projects={PROJECTS} height={260} showRegions={false} />
+        </div>
       </div>
 
       {/* MAIN GRID */}
       <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
-        {/* LEFT — projects + portfolio */}
         <div className="space-y-6">
-          {/* Risk distribution */}
           <div className="card p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -118,18 +162,18 @@ export default function Dashboard() {
               <Link href="/projects" className="text-[12px] text-ink-dim hover:text-ink">View all →</Link>
             </div>
             <div className="divide-y divide-line">
-              {PROJECTS.slice(0, 4).map((p) => (
+              {PROJECTS.slice(0, 5).map((p) => (
                 <Link
                   key={p.id}
                   href={`/projects/${p.id}`}
-                  className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-bg-elev/50"
+                  className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-4 transition-colors hover:bg-bg-elev/50 md:grid-cols-[64px_1fr_120px_auto_auto]"
                 >
                   <div className="hidden md:block">
                     <div className="h-12 w-16 overflow-hidden rounded-md">
                       <ProjectThumbnail sector={p.sector} />
                     </div>
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <div className="truncate text-[14px] font-semibold">{p.name}</div>
                       {p.alerts > 0 && (
@@ -145,6 +189,9 @@ export default function Dashboard() {
                         style={{ width: `${p.progress}%` }}
                       />
                     </div>
+                  </div>
+                  <div className="hidden md:block">
+                    <Sparkline data={p.trustHistory.slice(-30)} color={p.risk === "high" ? "#ef4444" : p.risk === "med" ? "#f59e0b" : "#10b981"} width={110} height={30} />
                   </div>
                   <div className="hidden text-right md:block">
                     <div className="text-[13px] font-semibold">GHS {(p.spentGHS / 1000).toFixed(0)}K</div>
@@ -165,7 +212,7 @@ export default function Dashboard() {
           <div className="card overflow-hidden">
             <div className="flex items-center justify-between border-b border-line px-5 py-3">
               <div className="text-[14px] font-semibold">Active alerts</div>
-              <span className="chip risk-high">{activeAlerts}</span>
+              <Link href="/inbox" className="chip risk-high hover:bg-risk-high/10">{activeAlerts}</Link>
             </div>
             <div className="divide-y divide-line">
               {ALERTS.slice(0, 5).map((a) => {
@@ -239,7 +286,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, sub, accent }: any) {
+function StatCard({ icon: Icon, label, value, sub, accent, spark }: any) {
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between">
@@ -251,8 +298,17 @@ function StatCard({ icon: Icon, label, value, sub, accent }: any) {
           <Icon className="h-4 w-4" />
         </div>
       </div>
-      <div className="mt-2 text-2xl font-semibold tracking-tight">{value}</div>
-      <div className="mt-0.5 text-[12px] text-ink-dim">{sub}</div>
+      <div className="mt-2 flex items-baseline justify-between gap-2">
+        <div>
+          <div className="text-2xl font-semibold tracking-tight">{value}</div>
+          <div className="mt-0.5 text-[12px] text-ink-dim">{sub}</div>
+        </div>
+        {spark && (
+          <div className="opacity-90">
+            <Sparkline data={spark.slice(-30)} color={accent} width={92} height={32} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
