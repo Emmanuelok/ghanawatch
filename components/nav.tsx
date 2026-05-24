@@ -43,12 +43,22 @@ const moreGroups = [
   {
     title: "Community & build",
     items: [
+      { href: "/onboarding", label: "Get started (onboarding)" },
       { href: "/community", label: "Hometown rooms" },
       { href: "/insurance", label: "Fraud insurance" },
       { href: "/mobile", label: "Mobile app preview" },
       { href: "/knowledge", label: "Fraud knowledge base" },
       { href: "/sectors", label: "Sectors" },
       { href: "/developers", label: "API & webhooks" },
+      { href: "/status", label: "Platform status" },
+    ],
+  },
+  {
+    title: "Institutional",
+    items: [
+      { href: "/compliance", label: "Compliance dashboard" },
+      { href: "/diaspora-bond", label: "Diaspora bond programme" },
+      { href: "/embassy", label: "Embassy desk" },
     ],
   },
 ];
@@ -105,8 +115,8 @@ export function Nav() {
               More <ChevronDown className="h-3 w-3" />
             </button>
             {moreOpen && (
-              <div className="absolute right-0 top-9 z-50 w-[640px] overflow-hidden rounded-xl border border-line bg-bg-card shadow-2xl">
-                <div className="grid grid-cols-3 divide-x divide-line">
+              <div className="absolute right-0 top-9 z-50 w-[860px] overflow-hidden rounded-xl border border-line bg-bg-card shadow-2xl">
+                <div className="grid grid-cols-4 divide-x divide-line">
                   {moreGroups.map((g) => (
                     <div key={g.title} className="p-4">
                       <div className="mb-2 text-[10px] uppercase tracking-[0.14em] text-ink-muted">{g.title}</div>
