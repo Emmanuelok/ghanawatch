@@ -41,6 +41,8 @@ import { ParcelMap } from "@/components/parcel-map";
 import { SignatoriesPanel } from "@/components/signatories";
 import { AssemblyAttestationCard, type AssemblyAttestation } from "@/components/assembly-attestation";
 import { ProjectChat } from "@/components/project-chat";
+import { ProjectHealth } from "@/components/project-health";
+import { DroneGallery } from "@/components/drone-gallery";
 import { PARCELS } from "@/lib/parcels";
 import { SIGNATORIES } from "@/lib/mock-data";
 import { ProjectTabs } from "./tabs";
@@ -159,8 +161,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* TRUST + RISK CHART + EXPLAINER + SIGNATORIES */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      {/* AI HEALTH + TRUST CHART + EXPLAINER */}
+      <div className="mt-6">
+        <ProjectHealth projectId={project.id} />
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <div className="card p-5">
           <div className="mb-3 flex items-center justify-between">
             <div>
@@ -330,6 +336,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           )
         }
         chatTab={<ProjectChat projectId={project.id} />}
+        droneTab={<DroneGallery project={project} />}
       />
     </div>
   );

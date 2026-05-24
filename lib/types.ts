@@ -315,3 +315,59 @@ export type HometownRoom = {
   lastMessage?: { actor: string; text: string; ts: string };
   verified: boolean;
 };
+
+// ---- Vendor directory ----
+
+export type Vendor = {
+  id: string;
+  name: string;
+  category: "cement" | "rebar" | "roofing" | "blocks" | "tiles" | "paint" | "plumbing" | "electrical" | "hardware" | "timber" | "aluminum" | "labor" | "transport";
+  region: string;
+  city: string;
+  rating: number;
+  reviewCount: number;
+  jobsCompleted: number;
+  yearsActive: number;
+  gra_tin: string;
+  momoMerchantId: string;
+  licensed: boolean;
+  letterheadVerified: boolean;
+  bio: string;
+  productLines: string[];
+  priceBand: "budget" | "mid" | "premium";
+  responseHours: number;
+  lastVerifiedAt: string;
+};
+
+export type Product = {
+  id: string;
+  vendorId: string;
+  name: string;
+  unit: string;
+  priceGHS: number;
+  stockLevel: "high" | "medium" | "low" | "out";
+  category: Vendor["category"];
+  imageColor: string;
+  description: string;
+  deliveryDays: number;
+  minOrder: number;
+};
+
+// ---- Disputes / ADR ----
+
+export type Dispute = {
+  id: string;
+  projectId: string;
+  raisedBy: string;
+  raisedAgainst: string;
+  amountGHS: number;
+  type: "service-quality" | "non-delivery" | "overcharge" | "documentation" | "encroachment" | "title" | "other";
+  stage: "raised" | "negotiation" | "mediation" | "arbitration" | "court" | "resolved" | "withdrawn";
+  openedAt: string;
+  lastUpdated: string;
+  summary: string;
+  arbitratorAssigned?: string;
+  evidenceCount: number;
+  hearings: { ts: string; mode: "video" | "in-person" | "written"; notes: string }[];
+  resolution?: { ts: string; outcome: "in-favour-claimant" | "in-favour-respondent" | "split" | "withdrawn"; awardGHS?: number; note: string };
+};

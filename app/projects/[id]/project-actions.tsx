@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Camera, ShieldCheck, ScrollText, MessageSquare } from "lucide-react";
+import { Camera, ShieldCheck, ScrollText, MessageSquare, Share2 } from "lucide-react";
 import { DispatchModal } from "@/components/dispatch-modal";
 import type { Trustee } from "@/lib/types";
 
@@ -24,6 +24,9 @@ export function ProjectActions({
         </button>
         <Link href={`/projects/${projectId}/evidence`} className="btn btn-ghost">
           <ScrollText className="h-4 w-4" /> Generate evidence pack
+        </Link>
+        <Link href={`/v/${projectId}`} className="btn btn-ghost">
+          <Share2 className="h-4 w-4" /> Public verification card
         </Link>
         <Link href="/investigator" className="btn btn-ghost">
           <MessageSquare className="h-4 w-4" /> Open investigator

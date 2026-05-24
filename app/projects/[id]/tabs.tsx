@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
-import { FileSearch, Camera, Flag, ScrollText, Users, ShieldAlert, Map, MessageCircle } from "lucide-react";
+import { FileSearch, Camera, Flag, ScrollText, Users, ShieldAlert, Map, MessageCircle, Plane } from "lucide-react";
 
-type Tab = "docs" | "photos" | "map" | "milestones" | "ledger" | "cases" | "trustee" | "chat";
+type Tab = "docs" | "photos" | "drone" | "map" | "milestones" | "ledger" | "cases" | "trustee" | "chat";
 
 export function ProjectTabs({
   docsTab,
   photosTab,
+  droneTab,
   mapTab,
   milestonesTab,
   ledgerTab,
@@ -16,6 +17,7 @@ export function ProjectTabs({
 }: {
   docsTab: React.ReactNode;
   photosTab: React.ReactNode;
+  droneTab: React.ReactNode;
   mapTab: React.ReactNode;
   milestonesTab: React.ReactNode;
   ledgerTab: React.ReactNode;
@@ -27,6 +29,7 @@ export function ProjectTabs({
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "docs", label: "Documents (forensics)", icon: FileSearch },
     { id: "photos", label: "Site evidence", icon: Camera },
+    { id: "drone", label: "Drone footage", icon: Plane },
     { id: "map", label: "Parcel map", icon: Map },
     { id: "chat", label: "Chat", icon: MessageCircle },
     { id: "milestones", label: "Milestones / escrow", icon: Flag },
@@ -60,6 +63,7 @@ export function ProjectTabs({
       <div className="mt-6 animate-fade-in">
         {tab === "docs" && docsTab}
         {tab === "photos" && photosTab}
+        {tab === "drone" && droneTab}
         {tab === "map" && mapTab}
         {tab === "chat" && chatTab}
         {tab === "milestones" && milestonesTab}
