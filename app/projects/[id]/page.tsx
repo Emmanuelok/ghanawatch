@@ -43,6 +43,8 @@ import { AssemblyAttestationCard, type AssemblyAttestation } from "@/components/
 import { ProjectChat } from "@/components/project-chat";
 import { ProjectHealth } from "@/components/project-health";
 import { DroneGallery } from "@/components/drone-gallery";
+import { PresenceIndicator } from "@/components/presence-indicator";
+import { ExpectedProgress } from "@/components/expected-progress";
 import { PARCELS } from "@/lib/parcels";
 import { SIGNATORIES } from "@/lib/mock-data";
 import { ProjectTabs } from "./tabs";
@@ -76,9 +78,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-8">
-      <Link href="/projects" className="mb-6 inline-flex items-center gap-2 text-[12px] text-ink-dim hover:text-ink">
-        <ArrowLeft className="h-3.5 w-3.5" /> All projects
-      </Link>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <Link href="/projects" className="inline-flex items-center gap-2 text-[12px] text-ink-dim hover:text-ink">
+          <ArrowLeft className="h-3.5 w-3.5" /> All projects
+        </Link>
+        <PresenceIndicator projectName={project.name} />
+      </div>
 
       <div className="card overflow-hidden">
         <ProjectThumbnail sector={project.sector} />
@@ -161,9 +166,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* AI HEALTH + TRUST CHART + EXPLAINER */}
-      <div className="mt-6">
+      {/* AI HEALTH + EXPECTED PROGRESS */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <ProjectHealth projectId={project.id} />
+        <ExpectedProgress project={project} />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">

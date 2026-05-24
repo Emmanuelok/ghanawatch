@@ -29,6 +29,9 @@ const moreGroups = [
       { href: "/digest", label: "Digest builder" },
       { href: "/templates", label: "Document templates" },
       { href: "/compare", label: "Compare projects" },
+      { href: "/funding", label: "Fund escrow" },
+      { href: "/alerts", label: "Smart alerts" },
+      { href: "/anchor", label: "Blockchain anchor" },
     ],
   },
   {
@@ -40,6 +43,8 @@ const moreGroups = [
       { href: "/network/become-a-trustee", label: "Become a trustee" },
       { href: "/network/become-a-trustee/deep-kyc", label: "Trustee deep KYC" },
       { href: "/manager", label: "Manager bot preview" },
+      { href: "/reputation", label: "Reputation network" },
+      { href: "/mediation", label: "Mediation room" },
     ],
   },
   {
@@ -58,6 +63,8 @@ const moreGroups = [
       { href: "/developers", label: "API & webhooks" },
       { href: "/help", label: "Help center" },
       { href: "/referrals", label: "Refer & earn" },
+      { href: "/languages", label: "Languages (Twi, Ewe, Pidgin…)" },
+      { href: "/tour", label: "Interactive product tour" },
       { href: "/status", label: "Platform status" },
     ],
   },
@@ -67,6 +74,7 @@ const moreGroups = [
       { href: "/compliance", label: "Compliance dashboard" },
       { href: "/diaspora-bond", label: "Diaspora bond programme" },
       { href: "/embassy", label: "Embassy desk" },
+      { href: "/partners", label: "Partners & case studies" },
     ],
   },
 ];
