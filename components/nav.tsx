@@ -45,6 +45,13 @@ const moreGroups = [
       { href: "/esg", label: "ESG & carbon" },
       { href: "/succession", label: "Succession plan" },
       { href: "/integrations", label: "Integrations (Slack/Teams…)" },
+      { href: "/ml-trainer", label: "Custom ML trainer" },
+      { href: "/legal-search", label: "Legal precedent search" },
+      { href: "/case-law", label: "Case-law database" },
+      { href: "/gallery", label: "Evidence gallery" },
+      { href: "/campaigns", label: "Success campaigns" },
+      { href: "/migration", label: "Migration from Excel" },
+      { href: "/api-health", label: "Public API health" },
     ],
   },
   {
