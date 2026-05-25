@@ -36,6 +36,9 @@ const moreGroups = [
       { href: "/email-forensics", label: "Email forensics" },
       { href: "/scenarios", label: "Scenario planner" },
       { href: "/reports", label: "Reports library" },
+      { href: "/assets", label: "Asset registry" },
+      { href: "/red-team", label: "AI red-team" },
+      { href: "/climate-risk", label: "Climate & infra risk" },
     ],
   },
   {
@@ -56,7 +59,10 @@ const moreGroups = [
     items: [
       { href: "/onboarding", label: "Get started (onboarding)" },
       { href: "/portfolios", label: "Portfolios" },
+      { href: "/family", label: "Family circle" },
       { href: "/community", label: "Hometown rooms" },
+      { href: "/governance", label: "Hometown governance" },
+      { href: "/demo", label: "Guided demo" },
       { href: "/vendors", label: "Verified vendors" },
       { href: "/marketplace", label: "Marketplace" },
       { href: "/disputes", label: "Disputes & ADR" },
@@ -84,6 +90,7 @@ const moreGroups = [
       { href: "/diaspora-bond", label: "Diaspora bond programme" },
       { href: "/embassy", label: "Embassy desk" },
       { href: "/partners", label: "Partners & case studies" },
+      { href: "/whitelabel", label: "White-label studio" },
     ],
   },
 ];

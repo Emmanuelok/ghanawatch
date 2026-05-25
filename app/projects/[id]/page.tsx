@@ -46,6 +46,7 @@ import { DroneGallery } from "@/components/drone-gallery";
 import { PresenceIndicator } from "@/components/presence-indicator";
 import { ExpectedProgress } from "@/components/expected-progress";
 import { TimeMachine } from "@/components/time-machine";
+import { PhotoVision } from "@/components/photo-vision";
 import { PARCELS } from "@/lib/parcels";
 import { SIGNATORIES } from "@/lib/mock-data";
 import { ProjectTabs } from "./tabs";
@@ -236,11 +237,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           </div>
         }
         photosTab={
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {photos.map((p) => (
-              <SitePhotoCard key={p.id} photo={p} />
-            ))}
-            {photos.length === 0 && <Empty>No site evidence yet — request a photo or dispatch a trustee.</Empty>}
+          <div className="space-y-4">
+            <PhotoVision projectName={project.name} />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {photos.map((p) => (
+                <SitePhotoCard key={p.id} photo={p} />
+              ))}
+              {photos.length === 0 && <Empty>No site evidence yet — request a photo or dispatch a trustee.</Empty>}
+            </div>
           </div>
         }
         mapTab={
