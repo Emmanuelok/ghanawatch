@@ -33,7 +33,11 @@ export default async function EvidencePackPage({ params }: { params: Promise<{ i
   const milestones = getMilestonesByProject(id);
   const cases = getCasesByProject(id);
 
-  const packHash = shortHash(`pack:${id}:${audit[0]?.hash ?? ""}:${Date.now()}`);
+  // Deterministic seal: derived from the project's ledger state, not wall-clock,
+  // so the same evidence produces the same pack hash on every generation.
+  const packHash = shortHash(
+    `pack:${id}:${audit.length}:${audit[0]?.hash ?? ""}:${docs.length}:${photos.length}`,
+  );
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">

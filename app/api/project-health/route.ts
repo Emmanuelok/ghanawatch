@@ -7,6 +7,7 @@ import {
   getAlertsByProject,
   getCasesByProject,
 } from "@/lib/mock-data";
+import { rateLimit, tooMany, readJsonGuarded, cleanString } from "@/lib/api-guard";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -14,7 +15,12 @@ export const maxDuration = 30;
 const SYSTEM = `You are GhanaWatch's project health narrator. Given a project snapshot, write a 3-4 sentence executive narrative (English, plain) that an owner abroad can read in 10 seconds to know where the project stands. Tone: candid, specific, no fluff. End with a one-line "Next best action".`;
 
 export async function POST(req: NextRequest) {
-  const { projectId } = await req.json().catch(() => ({}));
+  const rl = rateLimit(req, { name: "health", limit: 20, windowMs: 60_000 });
+  if (!rl.ok) return tooMany(rl.retryAfter);
+
+  const parsed = await readJsonGuarded(req, 16 * 1024);
+  if (!parsed.ok) return parsed.res;
+  const projectId = cleanString(parsed.body.projectId, 64);
   const project = getProject(projectId);
   if (!project) return NextResponse.json({ error: "not found" }, { status: 404 });
 

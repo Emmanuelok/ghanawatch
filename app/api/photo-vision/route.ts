@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAnthropic } from "@/lib/ai";
+import { rateLimit, tooMany, readJsonGuarded, validateImage, cleanString } from "@/lib/api-guard";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -23,9 +24,17 @@ Return ONLY JSON:
 }`;
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const image: string | undefined = body.image;
-  const projectCtx: string = body.projectCtx ?? "";
+  const rl = rateLimit(req, { name: "vision", limit: 12, windowMs: 60_000 });
+  if (!rl.ok) return tooMany(rl.retryAfter);
+
+  const parsed = await readJsonGuarded(req, 9 * 1024 * 1024);
+  if (!parsed.ok) return parsed.res;
+  const body = parsed.body;
+
+  const imgCheck = validateImage(body.image);
+  if (!imgCheck.ok) return NextResponse.json({ error: imgCheck.reason }, { status: 400 });
+  const image = imgCheck.image;
+  const projectCtx = cleanString(body.projectCtx, 200);
 
   if (!image) return NextResponse.json({ error: "image required" }, { status: 400 });
 

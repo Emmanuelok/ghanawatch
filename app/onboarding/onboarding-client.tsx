@@ -47,8 +47,16 @@ export function OnboardingClient() {
   const [managerName, setManagerName] = useState("");
   const [managerRelation, setManagerRelation] = useState("Brother");
   const [managerPhone, setManagerPhone] = useState("+233 ");
+  // Deterministic invite token derived from the inputs — stable across SSR/client
+  // render (Math.random() here would cause a hydration mismatch).
+  const inviteToken = Math.abs(
+    [...`${projectName}|${managerName}`].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7),
+  )
+    .toString(36)
+    .slice(0, 7)
+    .padStart(7, "0");
   const inviteLink = `https://wa.me/233502222999?text=${encodeURIComponent(
-    `Hi ${managerName || "manager"}, please join the GhanaWatch project "${projectName || "..."}" — link: gw.app/m/${Math.random().toString(36).slice(2, 9)}`,
+    `Hi ${managerName || "manager"}, please join the GhanaWatch project "${projectName || "..."}" — link: gw.app/m/${inviteToken}`,
   )}`;
 
   // Step 4 — CO-SIGNERS

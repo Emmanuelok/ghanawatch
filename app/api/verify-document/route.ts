@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAnthropic } from "@/lib/ai";
 import { shortHash } from "@/lib/hash";
+import { rateLimit, tooMany, readJsonGuarded, validateImage, cleanString } from "@/lib/api-guard";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -50,10 +51,19 @@ Return ONLY JSON of shape:
 }`;
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const text: string = (body.text ?? "").toString().slice(0, 4000);
-  const type: string = (body.type ?? "receipt").toString();
-  const image: string | undefined = body.image; // data URL like "data:image/jpeg;base64,..."
+  const rl = rateLimit(req, { name: "verify", limit: 20, windowMs: 60_000 });
+  if (!rl.ok) return tooMany(rl.retryAfter);
+
+  const parsed = await readJsonGuarded(req, 9 * 1024 * 1024);
+  if (!parsed.ok) return parsed.res;
+  const body = parsed.body;
+
+  const text = cleanString(body.text, 4000);
+  const type = cleanString(body.type, 40) || "receipt";
+
+  const imgCheck = validateImage(body.image);
+  if (!imgCheck.ok) return NextResponse.json({ error: imgCheck.reason }, { status: 400 });
+  const image = imgCheck.image;
 
   if (!text.trim() && !image) {
     return NextResponse.json({ error: "Provide text or image" }, { status: 400 });

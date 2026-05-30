@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAnthropic, SYSTEM_PROMPT, offlineInvestigatorReply } from "@/lib/ai";
+import { rateLimit, tooMany, readJsonGuarded, sanitizeMessages } from "@/lib/api-guard";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const messages: { role: "user" | "assistant"; content: string }[] = Array.isArray(body.messages)
-    ? body.messages
-    : [];
+  const rl = rateLimit(req, { name: "investigator", limit: 30, windowMs: 60_000 });
+  if (!rl.ok) return tooMany(rl.retryAfter);
+
+  const parsed = await readJsonGuarded(req, 256 * 1024);
+  if (!parsed.ok) return parsed.res;
+
+  const messages = sanitizeMessages(parsed.body.messages, { maxMessages: 20, maxLen: 6000 });
   const last = messages[messages.length - 1];
   if (!last || last.role !== "user") {
     return NextResponse.json({ error: "Empty conversation" }, { status: 400 });

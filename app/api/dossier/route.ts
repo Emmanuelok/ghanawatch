@@ -8,6 +8,7 @@ import {
   getAuditByProject,
   getAlertsByProject,
 } from "@/lib/mock-data";
+import { rateLimit, tooMany, readJsonGuarded, cleanString } from "@/lib/api-guard";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -29,8 +30,12 @@ Be specific to Ghanaian institutions: Lands Commission (LC Online, GELIS), GRA, 
 Be concise but thorough. ~700-1100 words. No fluff.`;
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const caseId: string = body.caseId;
+  const rl = rateLimit(req, { name: "dossier", limit: 10, windowMs: 60_000 });
+  if (!rl.ok) return tooMany(rl.retryAfter);
+
+  const parsed = await readJsonGuarded(req, 16 * 1024);
+  if (!parsed.ok) return parsed.res;
+  const caseId = cleanString(parsed.body.caseId, 64);
   if (!caseId) return NextResponse.json({ error: "caseId required" }, { status: 400 });
 
   const c = getCase(caseId);
