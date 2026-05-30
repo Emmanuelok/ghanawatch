@@ -30,7 +30,7 @@ Be specific to Ghanaian institutions: Lands Commission (LC Online, GELIS), GRA, 
 Be concise but thorough. ~700-1100 words. No fluff.`;
 
 export async function POST(req: NextRequest) {
-  const rl = rateLimit(req, { name: "dossier", limit: 10, windowMs: 60_000 });
+  const rl = await rateLimit(req, { name: "dossier", limit: 10, windowMs: 60_000 });
   if (!rl.ok) return tooMany(rl.retryAfter);
 
   const parsed = await readJsonGuarded(req, 16 * 1024);

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Lightweight in-memory rate limiter + request guards for API routes.
+ * Rate limiter + request guards for API routes.
  *
- * NOTE: In-memory state is per-instance. On Vercel's serverless/edge fleet this
- * gives best-effort throttling per warm instance — good enough to blunt abuse and
- * runaway AI-cost loops in a demo/MVP. For production-grade global limits, back
- * this with Upstash Redis / Vercel KV (swap the Map for a KV incr+expire).
+ * Two backends, selected automatically:
+ *  - Upstash Redis (global, durable) when UPSTASH_REDIS_REST_URL +
+ *    UPSTASH_REDIS_REST_TOKEN are set — the production answer for Vercel's
+ *    multi-instance serverless fleet.
+ *  - In-memory fallback otherwise — best-effort per-instance throttling that
+ *    still blunts abuse + runaway AI-cost loops in a demo/MVP.
  */
 
 type Bucket = { count: number; resetAt: number };
@@ -31,16 +33,53 @@ export function clientKey(req: NextRequest): string {
 
 export type RateResult = { ok: true } | { ok: false; retryAfter: number };
 
-export function rateLimit(
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+/** Atomic INCR + EXPIRE(NX) via Upstash REST pipeline. Returns null on any failure. */
+async function upstashHit(key: string, windowSec: number): Promise<{ count: number; ttl: number } | null> {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
+  try {
+    const res = await fetch(`${UPSTASH_URL}/pipeline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify([
+        ["INCR", key],
+        ["EXPIRE", key, String(windowSec), "NX"],
+        ["TTL", key],
+      ]),
+      // Don't let a slow KV stall the request path.
+      signal: AbortSignal.timeout(800),
+    });
+    if (!res.ok) return null;
+    const out = (await res.json()) as Array<{ result: number }>;
+    const count = out[0]?.result ?? 1;
+    const ttl = out[2]?.result ?? windowSec;
+    return { count, ttl: ttl > 0 ? ttl : windowSec };
+  } catch {
+    return null; // fail-open to the in-memory limiter
+  }
+}
+
+export async function rateLimit(
   req: NextRequest,
   opts: { name: string; limit: number; windowMs: number },
-): RateResult {
+): Promise<RateResult> {
+  const key = `rl:${opts.name}:${clientKey(req)}`;
+  const windowSec = Math.ceil(opts.windowMs / 1000);
+
+  const remote = await upstashHit(key, windowSec);
+  if (remote) {
+    return remote.count > opts.limit ? { ok: false, retryAfter: remote.ttl } : { ok: true };
+  }
+
+  // In-memory fallback
   const now = Date.now();
   sweep(now);
-  const key = `${opts.name}:${clientKey(req)}`;
-  const b = buckets.get(key);
+  const memKey = `${opts.name}:${clientKey(req)}`;
+  const b = buckets.get(memKey);
   if (!b || b.resetAt < now) {
-    buckets.set(key, { count: 1, resetAt: now + opts.windowMs });
+    buckets.set(memKey, { count: 1, resetAt: now + opts.windowMs });
     return { ok: true };
   }
   if (b.count >= opts.limit) {

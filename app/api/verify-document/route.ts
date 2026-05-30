@@ -51,7 +51,7 @@ Return ONLY JSON of shape:
 }`;
 
 export async function POST(req: NextRequest) {
-  const rl = rateLimit(req, { name: "verify", limit: 20, windowMs: 60_000 });
+  const rl = await rateLimit(req, { name: "verify", limit: 20, windowMs: 60_000 });
   if (!rl.ok) return tooMany(rl.retryAfter);
 
   const parsed = await readJsonGuarded(req, 9 * 1024 * 1024);
