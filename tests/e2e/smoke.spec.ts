@@ -54,6 +54,25 @@ test("no CSP violations on key pages", async ({ page }) => {
   expect(violations, violations[0]).toHaveLength(0);
 });
 
+test("map style toggles don't throw or leak popups", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/map", { waitUntil: "networkidle" });
+  // Switch to the interactive (tile) map if a tab is present.
+  const tab = page.getByRole("button", { name: /interactive/i });
+  if (await tab.count()) await tab.first().click();
+  await page.waitForTimeout(1000);
+  // Toggle dark/light/satellite a few times — must not stack handlers/popups.
+  for (const name of ["light", "satellite", "dark", "light"]) {
+    const btn = page.getByRole("button", { name: new RegExp(`^${name}$`, "i") });
+    if (await btn.count()) await btn.first().click().catch(() => {});
+    await page.waitForTimeout(250);
+  }
+  expect(errors, errors[0]).toHaveLength(0);
+  // No popup should be open when not hovering.
+  expect(await page.locator(".maplibregl-popup").count()).toBeLessThanOrEqual(1);
+});
+
 test("security headers are present", async ({ request }) => {
   const res = await request.get("/");
   const h = res.headers();

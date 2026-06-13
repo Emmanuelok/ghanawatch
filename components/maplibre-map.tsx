@@ -103,6 +103,10 @@ export default function MapLibreMap({
     map.on("load", () => {
       setReady(true);
       buildLayers(map, projects, showParcels, parcelProjectId);
+      // Attach pin interactions ONCE per map instance. They're delegated by
+      // layer id ("pin-core"), so they keep working after style toggles even
+      // though buildLayers recreates the layer.
+      attachPinInteractions(map);
     });
 
     mapRef.current = map;
@@ -142,6 +146,47 @@ export default function MapLibreMap({
       </div>
     </div>
   );
+}
+
+// Attach hover-popup + click-navigation once per map instance. Listeners are
+// delegated by layer id, so they persist across style toggles (which recreate
+// the layer). Calling this more than once would stack duplicate handlers/popups.
+function attachPinInteractions(map: MLMap) {
+  const popup = new maplibregl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+    className: "gw-popup",
+    offset: 12,
+  });
+  map.on("mouseenter", "pin-core", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    const f = e.features?.[0];
+    if (!f) return;
+    const p = f.properties as any;
+    const coords = (f.geometry as any).coordinates.slice();
+    const html = `
+      <div style="background:#13151d;border:1px solid #222633;border-radius:10px;padding:10px 12px;min-width:220px;color:#e8eaf0;font:500 12px/1.4 system-ui,-apple-system,sans-serif">
+        <div style="font-weight:600;font-size:13px">${escapeHtml(p.name)}</div>
+        <div style="color:#9aa0b0;font-size:11px;margin-top:2px">${escapeHtml(p.location)}</div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;color:#9aa0b0;font-size:11px">
+          <span>Risk <b style="color:${p.risk === 'high' ? '#ef4444' : p.risk === 'med' ? '#f59e0b' : '#10b981'}">${p.riskScore}</b></span>
+          <span>${p.progress}%</span>
+          <span>GHS ${(p.budgetGHS / 1000).toFixed(0)}K</span>
+        </div>
+        <div style="color:#f5b800;font-size:11px;margin-top:6px">${escapeHtml(p.managedBy)} (${escapeHtml(p.relation)})</div>
+      </div>`;
+    popup.setLngLat(coords).setHTML(html).addTo(map);
+  });
+  map.on("mouseleave", "pin-core", () => {
+    map.getCanvas().style.cursor = "";
+    popup.remove();
+  });
+  map.on("click", "pin-core", (e) => {
+    const f = e.features?.[0];
+    if (!f) return;
+    const p = f.properties as any;
+    window.location.href = `/projects/${p.id}`;
+  });
 }
 
 function buildLayers(map: MLMap, projects: Project[], showParcels: boolean, parcelProjectId?: string) {
@@ -211,43 +256,6 @@ function buildLayers(map: MLMap, projects: Project[], showParcels: boolean, parc
       },
     });
   }
-
-  // Hover cursor + popup
-  const popup = new maplibregl.Popup({
-    closeButton: false,
-    closeOnClick: false,
-    className: "gw-popup",
-    offset: 12,
-  });
-  map.on("mouseenter", "pin-core", (e) => {
-    map.getCanvas().style.cursor = "pointer";
-    const f = e.features?.[0];
-    if (!f) return;
-    const p = f.properties as any;
-    const coords = (f.geometry as any).coordinates.slice();
-    const html = `
-      <div style="background:#13151d;border:1px solid #222633;border-radius:10px;padding:10px 12px;min-width:220px;color:#e8eaf0;font:500 12px/1.4 system-ui,-apple-system,sans-serif">
-        <div style="font-weight:600;font-size:13px">${escapeHtml(p.name)}</div>
-        <div style="color:#9aa0b0;font-size:11px;margin-top:2px">${escapeHtml(p.location)}</div>
-        <div style="display:flex;justify-content:space-between;margin-top:8px;color:#9aa0b0;font-size:11px">
-          <span>Risk <b style="color:${p.risk === 'high' ? '#ef4444' : p.risk === 'med' ? '#f59e0b' : '#10b981'}">${p.riskScore}</b></span>
-          <span>${p.progress}%</span>
-          <span>GHS ${(p.budgetGHS / 1000).toFixed(0)}K</span>
-        </div>
-        <div style="color:#f5b800;font-size:11px;margin-top:6px">${escapeHtml(p.managedBy)} (${escapeHtml(p.relation)})</div>
-      </div>`;
-    popup.setLngLat(coords).setHTML(html).addTo(map);
-  });
-  map.on("mouseleave", "pin-core", () => {
-    map.getCanvas().style.cursor = "";
-    popup.remove();
-  });
-  map.on("click", "pin-core", (e) => {
-    const f = e.features?.[0];
-    if (!f) return;
-    const p = f.properties as any;
-    window.location.href = `/projects/${p.id}`;
-  });
 
   // Parcels
   if (showParcels) {
